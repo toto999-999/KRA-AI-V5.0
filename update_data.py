@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V5.8 (제주 전산 통합 & 중복 방지 완성본)
+# 프로그램 명칭: KRA전국 승부예상AI_V5.9 (15초 컷 초고속 다이어트 엔진)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V5.8"
+VERSION = "KRA전국 승부예상AI_V5.9"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -23,7 +23,7 @@ MEET_CONFIG = [
     ("3", "부산경남")
 ]
 
-# 🎯 전국 4대 경마장(서울/부경/영천/제주) 통합 기수 복승률 DB (%)
+# 전국 기수 복승률 DB (%)
 JOCKEY_RATES = {
     # 서울 기수
     "문세영": 33.2, "김용근": 24.5, "빅투아르": 25.1, "유승완": 21.0,
@@ -33,13 +33,13 @@ JOCKEY_RATES = {
     "서승운": 31.5, "최시대": 26.8, "다나카": 25.4, "다비드": 24.2,
     "유현명": 23.8, "정도윤": 22.5, "김혜선": 20.8, "김동영": 17.8,
     "이성재": 16.5, "송경윤": 15.2, "전진구": 14.8, "김어수": 14.5, "손경민": 14.0,
-    # 🌴 제주 기수 (신규 대거 보강!)
+    # 제주 기수
     "전현준": 26.5, "한영민": 24.2, "임재광": 21.8, "양민재": 19.5,
     "원유일": 18.2, "박재희": 17.5, "곽용남": 16.8, "김한남": 16.0,
     "강수한": 15.5, "이동준": 15.0, "안득수": 20.5, "정명일": 19.0
 }
 
-# 🎯 전국 4대 경마장 통합 조교사 복승률 DB (%)
+# 전국 조교사 복승률 DB (%)
 TRAINER_RATES = {
     # 서울 조교사
     "서홍수": 24.5, "송문길": 21.5, "배휴준": 20.8, "정호익": 19.5,
@@ -47,47 +47,10 @@ TRAINER_RATES = {
     # 부경/영천 조교사
     "김영관": 28.0, "라이스": 25.2, "민장기": 22.1, "구영준": 18.5,
     "김도현": 18.2, "안우성": 18.0, "임성실": 17.5, "백광열": 18.8, "강은석": 15.5,
-    # 🌴 제주 조교사 (신규 대거 보강!)
+    # 제주 조교사
     "심도연": 23.5, "김태준": 21.0, "강대은": 20.5, "김길홍": 18.5,
     "윤덕상": 17.8, "김대연": 17.2, "이준호": 16.5, "문성호": 15.8, "고성동": 22.0
 }
-
-def fetch_live_chulma_distances():
-    dist_map = {}
-    meets = [("1", "서울"), ("3", "부산경남"), ("2", "제주")]
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "*/*"
-    }
-
-    for m_code, m_name in meets:
-        try:
-            url = f"https://race.kra.co.kr/chulmainfo/ChulmaDetailInfoList.do?Act=02&Sub=1&meet={m_code}"
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=5) as res:
-                html = res.read().decode('euc-kr', errors='ignore')
-
-            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
-            for row in rows:
-                dist_match = re.search(r'(\d{3,4})\s*M', row, re.IGNORECASE)
-                if dist_match:
-                    dist_val = dist_match.group(1)
-                    target_meet = m_name
-                    if "영천" in row: target_meet = "영천"
-                    elif "부경" in row or "부산" in row: target_meet = "부산경남"
-                    elif "제주" in row: target_meet = "제주"
-                    elif "서울" in row: target_meet = "서울"
-
-                    tds = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
-                    for td in tds:
-                        clean_td = re.sub(r'<.*?>', '', td).strip()
-                        if clean_td.isdigit() and 1 <= int(clean_td) <= 16:
-                            rc_no = str(int(clean_td))
-                            dist_map[(target_meet, rc_no)] = dist_val
-                            break
-        except Exception:
-            continue
-    return dist_map
 
 def parse_time_seconds(time_str):
     try:
@@ -105,13 +68,12 @@ def parse_time_seconds(time_str):
         pass
     return None
 
-def calculate_speed_rating_v58(h, dist, is_post_race=False, meet_name="서울"):
+def calculate_speed_rating_v59(h, dist, is_post_race=False):
     bonus = 0.0
     tags = []
     
-    # 1. [경기 후] 오늘의 실제 완주시간 채점
     if is_post_race:
-        sec = parse_time_seconds(h["rc_time"])
+        sec = parse_time_seconds(h.get("rc_time", ""))
         if sec:
             base_time = {
                 800: 52.0, 900: 59.0, 1000: 65.5, 1110: 73.0, 1200: 74.8, 1400: 88.5
@@ -127,7 +89,7 @@ def calculate_speed_rating_v58(h, dist, is_post_race=False, meet_name="서울"):
                 bonus -= 4.0
         return bonus, tags
 
-    # 2. [경기 전] 출마표의 전적(승률/복승률) 및 레이팅 기반 사전 스피드/능력 분석!
+    # 경기 전 출마표 전적 분석
     tot_rc = int(re.sub(r'[^0-9]', '', str(h.get("rc_cnt", "0"))) or 0)
     ord1_cnt = int(re.sub(r'[^0-9]', '', str(h.get("ord1_cnt", "0"))) or 0)
     ord2_cnt = int(re.sub(r'[^0-9]', '', str(h.get("ord2_cnt", "0"))) or 0)
@@ -143,13 +105,9 @@ def calculate_speed_rating_v58(h, dist, is_post_race=False, meet_name="서울"):
     else:
         tags.append("신예마 🌟")
 
-    past_sec = parse_time_seconds(h.get("past_time", ""))
-    if past_sec:
-        tags.append(f"과거 기록({round(past_sec,1)}초)")
-
     return bonus, tags
 
-def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
+def fetch_meet_data(meet_code, meet_name, date_str):
     params = {
         "serviceKey": API_KEY,
         "pageNo": "1",
@@ -158,7 +116,6 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
         "rc_date": date_str
     }
     full_url = f"{URL}?{urllib.parse.urlencode(params)}"
-    print(f"[{meet_name}] 데이터 확인 요청: {date_str}")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -166,8 +123,9 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
     }
 
     try:
+        # 타임아웃을 6초로 엄격히 제한하여 지연 방지
         req = urllib.request.Request(full_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=6) as response:
             xml_data = response.read()
 
         root = ET.fromstring(xml_data)
@@ -199,21 +157,14 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
             weight = gv(["wgBudam", "wg_budam"]) or "55.0"
             track = gv(["track", "track_state", "trackCond", "weather"]) or "양호"
 
-            rc_time = gv(["rcTime", "rc_time", "record", "rcRecord", "raceRcd", "ordTime"]) or ""
-            past_time = gv(["bestRecord", "bestRcTime", "recentRecord", "recentRcTime", "preRcTime"]) or ""
-            rating = gv(["rating", "rat", "hr_rating"]) or ""
-            g1f_time = gv(["g1f", "g1f_time", "g1fTime", "g1fRecord", "g_1f"]) or ""
-            win_odds = gv(["winOdds", "win_odds", "win_rate", "odds"]) or "0"
-            pre_ord = gv(["preOrd", "pre_ord", "recentOrd", "preRcOrd"]) or ""
-            
-            rc_cnt = gv(["rcCnt", "rc_cnt", "totRcCnt", "tot_rc_cnt"]) or "0"
+            rc_time = gv(["rcTime", "rc_time", "record", "rcRecord", "ordTime"]) or ""
+            rc_cnt = gv(["rcCnt", "rc_cnt", "totRcCnt"]) or "0"
             ord1_cnt = gv(["ord1Cnt", "ord1_cnt", "totOrd1Cnt"]) or "0"
             ord2_cnt = gv(["ord2Cnt", "ord2_cnt", "totOrd2Cnt"]) or "0"
 
-            s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p", "s1fRank"]) or "99"
+            s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p"]) or "99"
             is_front = True if s1f_rank in ["1", "2", "01", "02"] else False
 
-            # 착순 판별 (0 또는 공백은 경기 전으로 처리)
             ord_no = "-"
             for child in it:
                 tag_low = child.tag.lower()
@@ -236,7 +187,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                     "horses": []
                 }
 
-            # 🎯 [중복 마필 원천 차단 필터]
+            # 중복 마필 방지
             already_exists = any(h["gate"] == gate or h["name"] == name for h in races[key]["horses"])
             if already_exists:
                 continue
@@ -249,11 +200,6 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 "weight": weight,
                 "track": track,
                 "rc_time": rc_time,
-                "past_time": past_time,
-                "rating": rating,
-                "g1f_time": g1f_time,
-                "win_odds": win_odds,
-                "pre_ord": pre_ord,
                 "rc_cnt": rc_cnt,
                 "ord1_cnt": ord1_cnt,
                 "ord2_cnt": ord2_cnt,
@@ -265,12 +211,13 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
             meet = r["meet_name"]
             r_no = str(int(r["race_no"])) if str(r["race_no"]).isdigit() else str(r["race_no"])
 
-            if (meet, r_no) in live_distances:
-                actual_dist = live_distances[(meet, r_no)]
-            elif meet == "제주":
+            # 기본 거리 매핑
+            if meet == "제주":
                 actual_dist = "900" if r_no in ["1", "2", "3"] else ("1000" if r_no in ["4", "5"] else "1110")
+            elif meet == "부산경남":
+                actual_dist = "1200" if r_no in ["1", "2", "3"] else ("1400" if r_no in ["4", "5", "6"] else "1800")
             else:
-                actual_dist = "1400"
+                actual_dist = "1200" if r_no in ["1", "6"] else ("1400" if r_no in ["2", "8"] else "1800")
 
             r["distance"] = actual_dist
             dist = int(actual_dist)
@@ -283,7 +230,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 tags = []
                 g = int(h["gate"]) if str(h["gate"]).isdigit() else 5
 
-                # 1. 통합 기수 & 조교사 복승률 (제주도 포함!)
+                # 1. 기수 & 조교사 복승률
                 jk_rate = JOCKEY_RATES.get(h["jockey"], 12.0)
                 score += (jk_rate * 0.8)
                 if jk_rate >= 24.0:
@@ -316,12 +263,12 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 except:
                     pass
 
-                # 4. 스피드/능력 분석 (사전 복승률 & 사후 주파기록)
-                s_bonus, s_tags = calculate_speed_rating_v58(h, dist, is_post_race=has_finished, meet_name=meet)
+                # 4. 스피드 & 능력 분석
+                s_bonus, s_tags = calculate_speed_rating_v59(h, dist, is_post_race=has_finished)
                 score += s_bonus
                 tags.extend(s_tags)
 
-                # 5. 단독 선행
+                # 5. 선행
                 if h["is_front"]:
                     score += 8.0
                     tags.append("선행 강세 🚀")
@@ -333,31 +280,43 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
 
         return list(races.values())
 
-    except Exception as e:
-        print(f"[{meet_name}] 수신 에러: {e}")
+    except Exception:
         return []
 
-def find_most_relevant_races(live_distances):
+# =========================================================================
+# ⚡ [초고속 15초 컷] 딱 3단계 날짜 다이렉트 탐색기
+# =========================================================================
+def find_fast_races():
     now = datetime.now(KST)
-    for offset in range(0, 5):
-        target_dt = (now + timedelta(days=offset)).strftime("%Y%m%d")
-        found = []
-        for m_code, m_name in MEET_CONFIG:
-            res = fetch_meet_data(m_code, m_name, target_dt, live_distances)
-            found.extend(res)
-            time.sleep(0.3)
-        if found:
-            return found, target_dt
 
-    for offset in range(1, 10):
-        past_dt = (now - timedelta(days=offset)).strftime("%Y%m%d")
-        found = []
-        for m_code, m_name in MEET_CONFIG:
-            res = fetch_meet_data(m_code, m_name, past_dt, live_distances)
-            found.extend(res)
-            time.sleep(0.3)
-        if found:
-            return found, past_dt
+    # 1단계: 오늘(당일) 확인
+    today_dt = now.strftime("%Y%m%d")
+    print(f"🔍 [1단계] 오늘({today_dt}) 경주 확인...")
+    races = []
+    for m_code, m_name in MEET_CONFIG:
+        races.extend(fetch_meet_data(m_code, m_name, today_dt))
+    if races:
+        return races, today_dt
+
+    # 2단계: 내일(D+1) 확인 (목요일 출마표 등)
+    tomorrow_dt = (now + timedelta(days=1)).strftime("%Y%m%d")
+    print(f"🔍 [2단계] 내일({tomorrow_dt}) 예정 경주 확인...")
+    races = []
+    for m_code, m_name in MEET_CONFIG:
+        races.extend(fetch_meet_data(m_code, m_name, tomorrow_dt))
+    if races:
+        return races, tomorrow_dt
+
+    # 3단계: 직전 경주일(지난 일요일) 단 1번만 정조준!
+    weekday = now.weekday()
+    days_back = weekday + 1 if weekday < 6 else 7
+    last_sun_dt = (now - timedelta(days=days_back)).strftime("%Y%m%d")
+    print(f"🔍 [3단계] 직전 경주일({last_sun_dt}) 정조준...")
+    races = []
+    for m_code, m_name in MEET_CONFIG:
+        races.extend(fetch_meet_data(m_code, m_name, last_sun_dt))
+    if races:
+        return races, last_sun_dt
 
     return [], ""
 
@@ -366,8 +325,7 @@ def main():
         print("❌ KRA_API_KEY 미설정")
         return
 
-    live_distances = fetch_live_chulma_distances()
-    all_races, target_date = find_most_relevant_races(live_distances)
+    all_races, target_date = find_fast_races()
 
     if all_races:
         meet_order = {"서울": 1, "부산경남": 2, "영천": 3, "제주": 4}
@@ -377,7 +335,7 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 데이터 갱신 완료!")
+        print(f"🎉 성공: [{VERSION}] {target_date} 초고속 갱신 완료!")
     else:
         print("데이터를 가져오지 못했습니다.")
 
