@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V5.5 (요일 무관 동적 최신경마일 자동 탐색본)
+# 프로그램 명칭: KRA전국 승부예상AI_V5.8 (제주 전산 통합 & 중복 방지 완성본)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V5.5"
+VERSION = "KRA전국 승부예상AI_V5.8"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -23,45 +23,43 @@ MEET_CONFIG = [
     ("3", "부산경남")
 ]
 
-BACKUP_DISTANCES = {
-    ("서울", "1"): "1200", ("서울", "2"): "1400", ("서울", "3"): "1300",
-    ("서울", "4"): "1700", ("서울", "5"): "1800", ("서울", "6"): "1200",
-    ("서울", "7"): "1300", ("서울", "8"): "1400", ("서울", "9"): "1800",
-    ("서울", "10"): "2000", ("서울", "11"): "1200",
-    ("영천", "1"): "1400", ("영천", "2"): "1600", ("영천", "3"): "1200",
-    ("영천", "4"): "1400", ("영천", "5"): "1200", ("영천", "6"): "1200",
-    ("제주", "1"): "900", ("제주", "2"): "900", ("제주", "3"): "900",
-    ("제주", "4"): "1000", ("제주", "5"): "1000", ("제주", "6"): "1110",
-    ("제주", "7"): "1110", ("제주", "8"): "1200"
-}
-
+# 🎯 전국 4대 경마장(서울/부경/영천/제주) 통합 기수 복승률 DB (%)
 JOCKEY_RATES = {
-    "문세영": 33.2, "서승운": 31.5, "최시대": 26.8, "다나카": 25.4,
-    "빅투아르": 25.1, "김용근": 24.5, "다비드": 24.2, "유현명": 23.8,
-    "정도윤": 22.5, "유승완": 21.0, "김혜선": 20.8, "송재철": 19.5,
-    "이혁": 19.2, "임다빈": 18.5, "김동영": 17.8, "이성재": 16.5,
-    "송경윤": 15.2, "전진구": 14.8, "김어수": 14.5, "손경민": 14.0,
-    "조인권": 21.4, "이동하": 16.0, "임기원": 17.5, "장추열": 18.0,
-    "최범현": 15.5, "마이아": 22.0, "조상범": 13.5, "김효정": 12.0
+    # 서울 기수
+    "문세영": 33.2, "김용근": 24.5, "빅투아르": 25.1, "유승완": 21.0,
+    "송재철": 19.5, "이혁": 19.2, "임다빈": 18.5, "장추열": 18.0,
+    "임기원": 17.5, "이동하": 16.0, "조인권": 21.4, "마이아": 22.0,
+    # 부경/영천 기수
+    "서승운": 31.5, "최시대": 26.8, "다나카": 25.4, "다비드": 24.2,
+    "유현명": 23.8, "정도윤": 22.5, "김혜선": 20.8, "김동영": 17.8,
+    "이성재": 16.5, "송경윤": 15.2, "전진구": 14.8, "김어수": 14.5, "손경민": 14.0,
+    # 🌴 제주 기수 (신규 대거 보강!)
+    "전현준": 26.5, "한영민": 24.2, "임재광": 21.8, "양민재": 19.5,
+    "원유일": 18.2, "박재희": 17.5, "곽용남": 16.8, "김한남": 16.0,
+    "강수한": 15.5, "이동준": 15.0, "안득수": 20.5, "정명일": 19.0
 }
 
+# 🎯 전국 4대 경마장 통합 조교사 복승률 DB (%)
 TRAINER_RATES = {
-    "서홍수": 24.5, "김영관": 28.0, "라이스": 25.2, "민장기": 22.1,
-    "송문길": 21.5, "배휴준": 20.8, "정호익": 19.5, "최용건": 19.0,
-    "구영준": 18.5, "김도현": 18.2, "안우성": 18.0, "임성실": 17.5,
-    "박재우": 17.2, "이강서": 16.8, "전승규": 16.0, "강은석": 15.5,
-    "서인석": 15.0, "백광열": 18.8, "심승태": 14.5, "조용배": 13.5
+    # 서울 조교사
+    "서홍수": 24.5, "송문길": 21.5, "배휴준": 20.8, "정호익": 19.5,
+    "최용건": 19.0, "박재우": 17.2, "이강서": 16.8, "전승규": 16.0, "서인석": 15.0,
+    # 부경/영천 조교사
+    "김영관": 28.0, "라이스": 25.2, "민장기": 22.1, "구영준": 18.5,
+    "김도현": 18.2, "안우성": 18.0, "임성실": 17.5, "백광열": 18.8, "강은석": 15.5,
+    # 🌴 제주 조교사 (신규 대거 보강!)
+    "심도연": 23.5, "김태준": 21.0, "강대은": 20.5, "김길홍": 18.5,
+    "윤덕상": 17.8, "김대연": 17.2, "이준호": 16.5, "문성호": 15.8, "고성동": 22.0
 }
 
 def fetch_live_chulma_distances():
     dist_map = {}
     meets = [("1", "서울"), ("3", "부산경남"), ("2", "제주")]
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Accept": "*/*"
     }
 
-    print("🌐 마사회 공식 출마표 전산망에서 최신 경주거리 수집 중...")
     for m_code, m_name in meets:
         try:
             url = f"https://race.kra.co.kr/chulmainfo/ChulmaDetailInfoList.do?Act=02&Sub=1&meet={m_code}"
@@ -75,14 +73,10 @@ def fetch_live_chulma_distances():
                 if dist_match:
                     dist_val = dist_match.group(1)
                     target_meet = m_name
-                    if "영천" in row:
-                        target_meet = "영천"
-                    elif "부경" in row or "부산" in row:
-                        target_meet = "부산경남"
-                    elif "제주" in row:
-                        target_meet = "제주"
-                    elif "서울" in row:
-                        target_meet = "서울"
+                    if "영천" in row: target_meet = "영천"
+                    elif "부경" in row or "부산" in row: target_meet = "부산경남"
+                    elif "제주" in row: target_meet = "제주"
+                    elif "서울" in row: target_meet = "서울"
 
                     tds = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
                     for td in tds:
@@ -93,16 +87,12 @@ def fetch_live_chulma_distances():
                             break
         except Exception:
             continue
-
-    if dist_map:
-        print(f"✅ 마사회 출마표 연동 성공! 총 {len(dist_map)}개 경주거리 자동 확보")
     return dist_map
 
 def parse_time_seconds(time_str):
     try:
         t = str(time_str).strip().replace("'", "").replace('"', '')
-        if not t:
-            return None
+        if not t: return None
         if ":" in t:
             parts = t.split(":")
             return float(parts[0]) * 60 + float(parts[1])
@@ -110,23 +100,22 @@ def parse_time_seconds(time_str):
             parts = t.split(".")
             return float(parts[0]) * 60 + float(f"{parts[1]}.{parts[2]}")
         val = float(t)
-        if val > 30.0:
-            return val
+        if val > 20.0: return val
     except:
         pass
     return None
 
-def calculate_speed_rating_dual(current_time_str, past_time_str, rating_str, dist, is_post_race=False):
+def calculate_speed_rating_v58(h, dist, is_post_race=False, meet_name="서울"):
     bonus = 0.0
     tags = []
-    base_time = {
-        900: 55.0, 1000: 61.5, 1110: 69.0, 1200: 74.8, 1300: 82.0, 1400: 88.5,
-        1600: 102.5, 1700: 111.5, 1800: 117.5, 2000: 133.0
-    }.get(dist, dist * 0.063 + 0.5)
-
+    
+    # 1. [경기 후] 오늘의 실제 완주시간 채점
     if is_post_race:
-        sec = parse_time_seconds(current_time_str)
-        if sec and sec > 30.0:
+        sec = parse_time_seconds(h["rc_time"])
+        if sec:
+            base_time = {
+                800: 52.0, 900: 59.0, 1000: 65.5, 1110: 73.0, 1200: 74.8, 1400: 88.5
+            }.get(dist, dist * 0.063 + 0.5)
             diff = base_time - sec
             if diff >= 1.0:
                 bonus += 10.0
@@ -135,118 +124,30 @@ def calculate_speed_rating_dual(current_time_str, past_time_str, rating_str, dis
                 bonus += 5.0
                 tags.append("기록 우수")
             elif diff <= -2.0:
-                bonus -= 5.0
-        return bonus, tags
-
-    past_sec = parse_time_seconds(past_time_str)
-    if past_sec and past_sec > 30.0:
-        diff = base_time - past_sec
-        if diff >= 1.0:
-            bonus += 10.0
-            tags.append(f"과거 스피드 최상({round(past_sec,1)}초) 🏎️")
-        elif diff >= 0.0:
-            bonus += 5.0
-            tags.append("과거 기록 우수")
-        elif diff <= -2.0:
-            bonus -= 4.0
-    else:
-        try:
-            r = int(re.sub(r'[^0-9]', '', str(rating_str)))
-            if r >= 65:
-                bonus += 8.0
-                tags.append(f"능력평점 최상(R{r}) 🏎️")
-            elif r >= 45:
-                bonus += 4.0
-                tags.append(f"능력평점 우수(R{r})")
-        except:
-            pass
-
-    return bonus, tags
-
-def analyze_gear(gear_str):
-    bonus = 0.0
-    tags = []
-    g_str = str(gear_str).strip()
-    if any(k in g_str for k in ["눈가면(신규)", "블링커(신규)", "신규눈가면", "눈가면신규", "블링커신규"]):
-        bonus += 6.0
-        tags.append("눈가면 첫 착용 🤿")
-    elif any(k in g_str for k in ["눈가면", "블링커", "Blinker"]):
-        bonus += 2.0
-        tags.append("눈가면 착용 🤿")
-    elif any(k in g_str for k in ["혀묶음끈", "승인장구", "특수재갈"]):
-        bonus += 2.0
-        tags.append("특수 장구 보완 🤿")
-    return bonus, tags
-
-def analyze_training(training_str, jockey_name):
-    bonus = 0.0
-    tags = []
-    t_str = str(training_str).strip()
-    if any(k in t_str for k in ["습보", "강훈련", "강구보", "습보2회", "습보3회"]):
-        bonus += 7.0
-        tags.append("새벽 습보 강훈련 🏋️")
-    if jockey_name and (jockey_name in t_str or "기수조교" in t_str or "기수직접" in t_str):
-        bonus += 5.0
-        tags.append("기수 직접 전담조교 🚴")
-    return bonus, tags
-
-def analyze_combo(combo_str):
-    bonus = 0.0
-    tags = []
-    c_str = str(combo_str).strip()
-    if any(k in c_str for k in ["1승", "2승", "3승", "우승", "동반1위", "입상2회", "입상 2회"]):
-        bonus += 6.0
-        tags.append("찰떡 콤비(우승 경험) 🤝")
-    elif any(k in c_str for k in ["2착", "입상1회", "입상 1회", "동반입상", "동반 2착"]):
-        bonus += 3.0
-        tags.append("동반 입상 이력 🤝")
-    return bonus, tags
-
-def analyze_g1f(g1f_str, is_post_race=False):
-    bonus = 0.0
-    tags = []
-    if not is_post_race:
-        return bonus, tags
-    try:
-        m = re.search(r'(\d+\.?\d*)', str(g1f_str))
-        if m:
-            g1f = float(m.group(1))
-            if 11.0 <= g1f <= 12.8:
-                bonus += 7.0
-                tags.append(f"직선주로 스퍼트 최강({g1f}초) 🚀")
-            elif 12.9 <= g1f <= 13.2:
-                bonus += 3.0
-            elif g1f >= 14.0:
                 bonus -= 4.0
-    except:
-        pass
+        return bonus, tags
+
+    # 2. [경기 전] 출마표의 전적(승률/복승률) 및 레이팅 기반 사전 스피드/능력 분석!
+    tot_rc = int(re.sub(r'[^0-9]', '', str(h.get("rc_cnt", "0"))) or 0)
+    ord1_cnt = int(re.sub(r'[^0-9]', '', str(h.get("ord1_cnt", "0"))) or 0)
+    ord2_cnt = int(re.sub(r'[^0-9]', '', str(h.get("ord2_cnt", "0"))) or 0)
+
+    if tot_rc >= 3:
+        quinella_rate = round(((ord1_cnt + ord2_cnt) / tot_rc) * 100, 1)
+        if quinella_rate >= 40.0:
+            bonus += 12.0
+            tags.append(f"통산 복승률 최상({quinella_rate}%) 🏎️")
+        elif quinella_rate >= 25.0:
+            bonus += 6.0
+            tags.append(f"검증된 입상마({quinella_rate}%)")
+    else:
+        tags.append("신예마 🌟")
+
+    past_sec = parse_time_seconds(h.get("past_time", ""))
+    if past_sec:
+        tags.append(f"과거 기록({round(past_sec,1)}초)")
+
     return bonus, tags
-
-def analyze_odds_and_value(odds_str, base_score):
-    bonus = 0.0
-    tags = []
-    odds = 0.0
-    try:
-        m = re.search(r'(\d+\.?\d*)', str(odds_str))
-        if m:
-            odds = float(m.group(1))
-    except:
-        odds = 0.0
-
-    if odds > 1.0:
-        if odds <= 3.2:
-            bonus += 8.0
-            tags.append(f"대중 강력 지지({odds}배) 🔥")
-        elif odds <= 6.5:
-            bonus += 4.0
-        elif odds >= 35.0:
-            bonus -= 5.0
-
-        if base_score >= 70.0 and 7.0 <= odds <= 25.0:
-            bonus += 4.0
-            tags.append(f"초특급 꿀배당 복병({odds}배) 💰")
-
-    return bonus, tags, odds
 
 def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
     params = {
@@ -290,7 +191,8 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
             raw_rc_no = gv(["rcNo", "rc_no"]) or "1"
             rc_no = str(int(raw_rc_no)) if raw_rc_no.isdigit() else raw_rc_no
 
-            gate = gv(["chulNo", "chul_no", "gateNo", "hrNo"]) or "0"
+            raw_gate = gv(["chulNo", "chul_no", "gateNo", "hrNo"]) or "0"
+            gate = str(int(raw_gate)) if raw_gate.isdigit() else raw_gate
             name = gv(["hrName", "hr_name"]) or "경주마"
             jockey = gv(["jkName", "jk_name"]) or "기수"
             trainer = gv(["trName", "tr_name"]) or "조교사"
@@ -298,25 +200,26 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
             track = gv(["track", "track_state", "trackCond", "weather"]) or "양호"
 
             rc_time = gv(["rcTime", "rc_time", "record", "rcRecord", "raceRcd", "ordTime"]) or ""
-            past_time = gv(["bestRecord", "bestRcTime", "recentRecord", "recentRcTime", "preRcTime", "bestTime", "fastTime"]) or ""
+            past_time = gv(["bestRecord", "bestRcTime", "recentRecord", "recentRcTime", "preRcTime"]) or ""
             rating = gv(["rating", "rat", "hr_rating"]) or ""
-            g1f_time = gv(["g1f", "g1f_time", "g1fTime", "g1fRecord", "goffPassRcd", "g_1f"]) or ""
-            win_odds = gv(["winOdds", "win_odds", "win_rate", "odds", "singleOdds"]) or "0"
-            pre_ord = gv(["preOrd", "pre_ord", "recentOrd", "preRcOrd", "rcResult1"]) or ""
+            g1f_time = gv(["g1f", "g1f_time", "g1fTime", "g1fRecord", "g_1f"]) or ""
+            win_odds = gv(["winOdds", "win_odds", "win_rate", "odds"]) or "0"
+            pre_ord = gv(["preOrd", "pre_ord", "recentOrd", "preRcOrd"]) or ""
+            
+            rc_cnt = gv(["rcCnt", "rc_cnt", "totRcCnt", "tot_rc_cnt"]) or "0"
+            ord1_cnt = gv(["ord1Cnt", "ord1_cnt", "totOrd1Cnt"]) or "0"
+            ord2_cnt = gv(["ord2Cnt", "ord2_cnt", "totOrd2Cnt"]) or "0"
 
-            gear_info = gv(["gear", "janggu", "hrequip", "equip", "blinker", "equipName", "chulmaGear"]) or ""
-            training_info = gv(["training", "jogyo", "trackwork", "trainType", "trainRider", "chulmaTraining"]) or ""
-            combo_info = gv(["combo", "dongban", "jkHrRecord", "jockeyCombo", "chulmaCombo"]) or ""
-
-            s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p", "s1fRank", "ffurPassRcd"]) or "99"
+            s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p", "s1fRank"]) or "99"
             is_front = True if s1f_rank in ["1", "2", "01", "02"] else False
 
+            # 착순 판별 (0 또는 공백은 경기 전으로 처리)
             ord_no = "-"
             for child in it:
                 tag_low = child.tag.lower()
                 if any(k in tag_low for k in ["ord", "rank", "plc", "place", "chak"]):
                     txt = child.text.strip() if child.text else ""
-                    if txt.isdigit():
+                    if txt.isdigit() and int(txt) > 0:
                         ord_no = str(int(txt))
                         break
 
@@ -333,8 +236,13 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                     "horses": []
                 }
 
+            # 🎯 [중복 마필 원천 차단 필터]
+            already_exists = any(h["gate"] == gate or h["name"] == name for h in races[key]["horses"])
+            if already_exists:
+                continue
+
             races[key]["horses"].append({
-                "gate": str(int(gate)) if gate.isdigit() else gate,
+                "gate": gate,
                 "name": name,
                 "jockey": jockey,
                 "trainer": trainer,
@@ -346,9 +254,9 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 "g1f_time": g1f_time,
                 "win_odds": win_odds,
                 "pre_ord": pre_ord,
-                "gear_info": gear_info,
-                "training_info": training_info,
-                "combo_info": combo_info,
+                "rc_cnt": rc_cnt,
+                "ord1_cnt": ord1_cnt,
+                "ord2_cnt": ord2_cnt,
                 "is_front": is_front,
                 "actual_ord": ord_no
             })
@@ -359,16 +267,15 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
 
             if (meet, r_no) in live_distances:
                 actual_dist = live_distances[(meet, r_no)]
-            elif (meet, r_no) in BACKUP_DISTANCES:
-                actual_dist = BACKUP_DISTANCES[(meet, r_no)]
+            elif meet == "제주":
+                actual_dist = "900" if r_no in ["1", "2", "3"] else ("1000" if r_no in ["4", "5"] else "1110")
             else:
                 actual_dist = "1400"
 
             r["distance"] = actual_dist
             dist = int(actual_dist)
 
-            has_finished = any(h["actual_ord"].isdigit() for h in r["horses"])
-            front_runner_count = sum(1 for h in r["horses"] if h["is_front"])
+            has_finished = any(h["actual_ord"].isdigit() and int(h["actual_ord"]) > 0 for h in r["horses"])
 
             for h in r["horses"]:
                 h["distance"] = str(dist)
@@ -376,15 +283,15 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 tags = []
                 g = int(h["gate"]) if str(h["gate"]).isdigit() else 5
 
-                # 1. 기수 & 조교사 복승률
-                jk_rate = JOCKEY_RATES.get(h["jockey"], 10.0)
+                # 1. 통합 기수 & 조교사 복승률 (제주도 포함!)
+                jk_rate = JOCKEY_RATES.get(h["jockey"], 12.0)
                 score += (jk_rate * 0.8)
-                if jk_rate >= 25.0:
+                if jk_rate >= 24.0:
                     tags.append("특급 기수 🏇")
-                elif jk_rate >= 20.0:
+                elif jk_rate >= 19.0:
                     tags.append("상위 기수")
 
-                tr_rate = TRAINER_RATES.get(h["trainer"], 12.0)
+                tr_rate = TRAINER_RATES.get(h["trainer"], 14.0)
                 score += (tr_rate * 0.5)
                 if tr_rate >= 20.0:
                     tags.append("우수 마방 🏆")
@@ -409,51 +316,18 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 except:
                     pass
 
-                # 4. 듀얼 모드 스피드 지수
-                s_bonus, s_tags = calculate_speed_rating_dual(
-                    h["rc_time"], h["past_time"], h["rating"], dist, is_post_race=has_finished
-                )
+                # 4. 스피드/능력 분석 (사전 복승률 & 사후 주파기록)
+                s_bonus, s_tags = calculate_speed_rating_v58(h, dist, is_post_race=has_finished, meet_name=meet)
                 score += s_bonus
                 tags.extend(s_tags)
 
-                # 5. 마구(장구) 변경
-                gear_bonus, gear_tags = analyze_gear(h["gear_info"])
-                score += gear_bonus
-                tags.extend(gear_tags)
-
-                # 6. 새벽 조교 & 기수 전담
-                train_bonus, train_tags = analyze_training(h["training_info"], h["jockey"])
-                score += train_bonus
-                tags.extend(train_tags)
-
-                # 7. 기수-말 찰떡 콤비
-                combo_bonus, combo_tags = analyze_combo(h["combo_info"])
-                score += combo_bonus
-                tags.extend(combo_tags)
-
-                # 8. 승급전
-                if str(h["pre_ord"]).strip() in ["1", "01"]:
-                    score -= 5.0
-                    tags.append("승급 첫 도전(검증 필요) 🧱")
-
-                # 9. G1F 스퍼트 (경기 후)
-                g_bonus, g_tags = analyze_g1f(h["g1f_time"], is_post_race=has_finished)
-                score += g_bonus
-                tags.extend(g_tags)
-
-                # 10. 단독 선행
-                if h["is_front"] and front_runner_count == 1:
-                    score += 10.0
-                    tags.append("단독 선행 찬스 🚀")
-
-                # 11. 배당률 앙상블
-                o_bonus, o_tags, parsed_odds = analyze_odds_and_value(h["win_odds"], score)
-                score += o_bonus
-                tags.extend(o_tags)
+                # 5. 단독 선행
+                if h["is_front"]:
+                    score += 8.0
+                    tags.append("선행 강세 🚀")
 
                 h["ai_score"] = round(score, 1)
                 h["ai_tags"] = tags
-                h["odds_display"] = f"{parsed_odds}배" if parsed_odds > 0 else "-"
 
             r["horses"].sort(key=lambda x: x["ai_score"], reverse=True)
 
@@ -463,46 +337,26 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
         print(f"[{meet_name}] 수신 에러: {e}")
         return []
 
-# =========================================================================
-# 🎯 [V5.5 핵심] 요일 무관 스마트 동적 날짜 탐색기
-# =========================================================================
 def find_most_relevant_races(live_distances):
-    """
-    요일 번호(금/토/일)에 절대 구애받지 않고 마사회 전산망을 탐색:
-    1. 오늘(D-Day) 경주 데이터 확인
-    2. 내일(D+1) ~ 대체공휴일(D+4)까지 예정된 미래 경주 출마표 확인 (10/5 월요일 포함!)
-    3. 미래 경주가 아직 미등록 상태라면 최근 7일간의 완료된 최신 경마일 자동 복구!
-    """
     now = datetime.now(KST)
-
-    # 1단계: 오늘(당일) ➔ 향후 4일 이내(내일, 주말, 대체공휴일 월요일 등) 예정 경주 우선 탐색
     for offset in range(0, 5):
         target_dt = (now + timedelta(days=offset)).strftime("%Y%m%d")
-        print(f"🔍 [예정/당일 경주 탐색] {target_dt} 마사회 전산 조회 중...")
-
         found = []
         for m_code, m_name in MEET_CONFIG:
             res = fetch_meet_data(m_code, m_name, target_dt, live_distances)
             found.extend(res)
             time.sleep(0.3)
-
         if found:
-            print(f"🎯 [발견 성공] {target_dt} 경주 데이터 {len(found)}개 확보 완료!")
             return found, target_dt
 
-    # 2단계: 예정 경주가 아직 등록되지 않은 날(평일 전날 등)에는 최근 완료된 최신 경주일 역추적
     for offset in range(1, 10):
         past_dt = (now - timedelta(days=offset)).strftime("%Y%m%d")
-        print(f"🔍 [최근 완료 경주 복구 탐색] {past_dt} 조회 중...")
-
         found = []
         for m_code, m_name in MEET_CONFIG:
             res = fetch_meet_data(m_code, m_name, past_dt, live_distances)
             found.extend(res)
             time.sleep(0.3)
-
         if found:
-            print(f"🎯 [최신 복기일 확인] {past_dt} 경주 데이터 {len(found)}개 복원 완료!")
             return found, past_dt
 
     return [], ""
@@ -523,9 +377,9 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 경마일 데이터 갱신 완료!")
+        print(f"🎉 성공: [{VERSION}] {target_date} 데이터 갱신 완료!")
     else:
-        print("경주 데이터를 가져오지 못했습니다.")
+        print("데이터를 가져오지 못했습니다.")
 
 if __name__ == "__main__":
     main()
