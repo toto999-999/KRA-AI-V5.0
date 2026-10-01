@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KRA전국 승부예상AI_V5.0</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding-bottom: 40px; }
+        
+        #lockScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .lock-box {
+            background: white; border-radius: 16px; padding: 28px 24px;
+            width: 100%; max-width: 340px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .lock-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .lock-title { font-size: 1.15rem; font-weight: 800; color: #1e3c72; margin-bottom: 6px; }
+        .lock-desc { font-size: 0.8rem; color: #777; margin-bottom: 20px; }
+        .pin-input {
+            width: 100%; padding: 12px; font-size: 1.5rem; text-align: center;
+            letter-spacing: 12px; border: 2px solid #ddd; border-radius: 10px;
+            outline: none; margin-bottom: 12px; transition: border 0.2s;
+        }
+        .pin-input:focus { border-color: #1e3c72; }
+        .pin-btn {
+            width: 100%; padding: 12px; background: #1e3c72; color: white;
+            border: none; border-radius: 10px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .pin-btn:active { background: #152b52; }
+        .pin-err { color: #e63946; font-size: 0.8rem; font-weight: bold; margin-top: 10px; display: none; }
+
+        #mainApp { display: none; }
+        header { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .header-btns { display: flex; gap: 6px; align-items: center; }
+        .btn-instant-update { background: linear-gradient(135deg, #ff7675, #d63031); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 5px rgba(214,48,49,0.3); }
+        .btn-instant-update:active { transform: scale(0.96); }
+        .btn-lock { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; }
+        
+        header p { font-size: 0.76rem; opacity: 0.85; margin-top: 4px; }
+        
+        .update-toast { display: none; background: #2d3436; color: #fab1a0; padding: 10px 14px; text-align: center; font-size: 0.8rem; font-weight: bold; border-bottom: 2px solid #e17055; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .tab-nav { display: flex; background: white; border-bottom: 1px solid #e1e4e8; position: sticky; top: 62px; z-index: 99; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .tab-btn { flex: 1; padding: 12px 6px; border: none; background: none; font-size: 0.88rem; font-weight: 700; color: #666; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
+        .tab-btn.active { color: #1e3c72; border-bottom-color: #1e3c72; background-color: #f8fafd; }
+
+        .container { padding: 14px; max-width: 500px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .pick-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53); color: white;
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+            box-shadow: 0 3px 8px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;
+        }
+        .pick-banner.hit-exact { background: linear-gradient(135deg, #0ba360, #3cba92); box-shadow: 0 4px 12px rgba(11, 163, 96, 0.4); }
+        .pick-banner.hit-win { background: linear-gradient(135deg, #2193b0, #6dd5ed); box-shadow: 0 4px 12px rgba(33, 147, 176, 0.4); }
+        .pick-banner.finished-miss { background: linear-gradient(135deg, #4b6cb7, #182848); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); }
+
+        .pick-banner h2 { font-size: 0.85rem; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+        .pick-list { font-size: 1.15rem; font-weight: 800; margin-top: 4px; }
+        .hit-status-tag { font-size: 0.75rem; background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 20px; font-weight: bold; }
+
+        .race-select-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .race-select-card select { padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold; font-size: 0.95rem; color: #1e3c72; outline: none; }
+        
+        .horse-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; border-left: 5px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.03); position: relative; }
+        .horse-card.rank-1 { border-left-color: #e63946; background-color: #fffaf0; }
+        .horse-card.rank-2 { border-left-color: #f4a261; }
+        .horse-card.rank-3 { border-left-color: #2a9d8f; }
+        
+        .gate-no { width: 38px; height: 38px; background-color: #f1f3f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; margin-right: 12px; flex-shrink: 0; }
+        .horse-card.rank-1 .gate-no { background-color: #e63946; color: white; }
+        
+        .horse-info { flex-grow: 1; }
+        .horse-name { font-size: 0.95rem; font-weight: bold; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .jockey-name { font-size: 0.78rem; color: #666; margin-bottom: 4px; }
+        .tag-list { display: flex; gap: 4px; flex-wrap: wrap; }
+        
+        .ai-tag { font-size: 0.68rem; background: #eef2f7; color: #2a5298; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+        .ai-tag.gold-tag { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; font-weight: 800; }
+        .ai-tag.purple-tag { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; font-weight: 800; }
+        
+        .score-info { text-align: right; flex-shrink: 0; margin-left: 8px; }
+        .win-rate { font-size: 1.15rem; font-weight: 800; color: #1e3c72; }
+        .horse-card.rank-1 .win-rate { color: #e63946; }
+        .odds-tag { font-size: 0.72rem; color: #e63946; font-weight: bold; margin-top: 2px; }
+
+        .badge-1st { background-color: #ffd700; color: #7a5800; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
+        .badge-2nd { background-color: #c0c0c0; color: #333; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
+        .badge-3rd { background-color: #cd7f32; color: white; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
+
+        .guide-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .guide-title { font-size: 1.05rem; font-weight: 800; color: #1e3c72; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #f0f3f8; padding-bottom: 8px; }
+        .guide-sub { font-size: 0.88rem; font-weight: 700; color: #333; margin-top: 12px; margin-bottom: 6px; }
+        .guide-text { font-size: 0.84rem; color: #555; line-height: 1.55; margin-bottom: 8px; }
+        .guide-box { background: #f8fafd; border-left: 4px solid #2a5298; padding: 10px 12px; border-radius: 4px; margin: 8px 0; font-size: 0.82rem; line-height: 1.5; color: #333; }
+        .guide-box.warn { border-left-color: #e63946; background: #fff8f8; }
+        .guide-box.gold { border-left-color: #f4a261; background: #fffcf6; }
+        .guide-box.purple { border-left-color: #8b5cf6; background: #faf5ff; }
+        
+        .badge-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.82rem; }
+        .badge-table th { background: #f1f4f9; padding: 8px; text-align: left; color: #1e3c72; border-bottom: 1px solid #ddd; }
+        .badge-table td { padding: 8px; border-bottom: 1px solid #eee; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+        .modal-box { background: white; width: 90%; max-width: 400px; border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-title { font-size: 1.05rem; font-weight: 800; color: #1e3c72; margin-bottom: 10px; }
+        .modal-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin: 10px 0; font-size: 0.85rem; }
+        .modal-btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+        .modal-btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.82rem; }
+        .modal-btn.primary { background: #1e3c72; color: white; }
+        .modal-btn.secondary { background: #eee; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div id="lockScreen">
+        <div class="lock-box">
+            <div class="lock-icon">🔐</div>
+            <div class="lock-title">KRA전국 승부예상AI_V5.0</div>
+            <div class="lock-desc">비밀번호(PIN 4자리)를 입력하세요.</div>
+            <input type="password" id="pinInput" class="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••">
+            <button class="pin-btn" onclick="checkPin()">잠금 해제</button>
+            <div id="pinErr" class="pin-err">비밀번호가 올바르지 않습니다!</div>
+        </div>
+    </div>
+
+    <div id="mainApp">
+        <header>
+            <div class="header-top">
+                <h1>🐎 KRA전국 승부예상AI_V5.0</h1>
+                <div class="header-btns">
+                    <button class="btn-instant-update" onclick="triggerImmediateUpdate()">⚡ 최신결과 갱신</button>
+                    <button class="btn-lock" onclick="lockApp()" title="화면 잠그기">🔒</button>
+                </div>
+            </div>
+            <p id="dateInfo">데이터 로딩 중...</p>
+        </header>
+
+        <div id="updateToast" class="update-toast"></div>
+
+        <div id="tokenModal" class="modal">
+            <div class="modal-box">
+                <div class="modal-title">🔑 원클릭 자동 갱신 설정</div>
+                <div class="guide-text" style="font-size:0.8rem;">
+                    깃허브에 들어가지 않고 이 버튼 하나로 1R, 2R 끝날 때마다 즉시 결과를 가져오려면 <strong>깃허브 개인 토큰(PAT)</strong>이 1번 필요합니다.
+                </div>
+                <input type="password" id="ghTokenInput" class="modal-input" placeholder="ghp_ 로 시작하는 토큰 입력">
+                <div style="font-size:0.75rem; color:#888;">
+                    • 토큰이 없으신가요? <a href="https://github.com/settings/tokens" target="_blank" style="color:#1e3c72; font-weight:bold;">[여기 클릭해서 발급]</a> (repo, workflow 체크)<br>
+                    • 깃허브에서 직접 누르기: <a href="https://github.com/toto999-999/KRA-AI-V2/actions" target="_blank" style="color:#e63946; font-weight:bold;">[Actions 바로가기]</a>
+                </div>
+                <div class="modal-btn-row">
+                    <button class="modal-btn secondary" onclick="closeTokenModal()">취소</button>
+                    <button class="modal-btn primary" onclick="saveTokenAndTrigger()">저장 후 바로 갱신</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-pred')">🐎 승부예측</button>
+            <button class="tab-btn" onclick="switchTab('tab-badges')">🏷️ AI 뱃지 도감</button>
+            <button class="tab-btn" onclick="switchTab('tab-betting')">🎯 베팅 가이드</button>
+        </nav>
+
+        <div class="container">
+            <!-- [탭 1] 승부예측 -->
+            <div id="tab-pred" class="tab-content active">
+                <div id="pickBanner" class="pick-banner">
+                    <h2>
+                        <span id="bannerTitle">🏆 AI 추천 복승식 (1-2위 조합)</span>
+                        <span id="hitStatusTag" class="hit-status-tag">예상 중</span>
+                    </h2>
+                    <div id="aiRecommendation" class="pick-list">-</div>
+                </div>
+
+                <div class="race-select-card">
+                    <span id="distLabel" style="font-weight:bold; font-size:0.9rem;">경주 선택</span>
+                    <select id="raceSelect" onchange="changeRace()"></select>
+                </div>
+
+                <div id="horseList"></div>
+            </div>
+
+            <!-- [탭 2] 뱃지 도감 -->
+            <div id="tab-badges" class="tab-content">
+                <div class="guide-card">
+                    <div class="guide-title">🏷️ AI 핵심 뱃지 총람 (V5.0 프로 엔진)</div>
+                    <div class="guide-text">AI가 주파기록(듀얼모드), 기수·조교사, 마구(장구), 새벽조교, 콤비전적을 정밀 분석하여 부착하는 스마트 뱃지입니다.</div>
+                    
+                    <table class="badge-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40%;">뱃지 명칭</th>
+                                <th>부여 시점 및 상세 조건</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="ai-tag purple-tag">눈가면 첫 착용 🤿</span></td>
+                                <td><strong>[마구 변경]</strong> 눈가면을 새로 착용해 시야를 가리고 전방 집중력을 극대화한 깜짝 복병마 (+6점)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag purple-tag">새벽 습보 강훈련 🏋️</span></td>
+                                <td><strong>[새벽 조교]</strong> 최근 1주일간 최고 강도 전력질주(습보)를 완벽 소화해 컨디션이 용광로인 말 (+7점)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag purple-tag">기수 직접 전담조교 🚴</span></td>
+                                <td><strong>[마방 승부]</strong> 관리사가 아닌 이번 출전 기수가 새벽에 직접 말을 타고 칼을 갈아놓은 승부마 (+5점)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag purple-tag">찰떡 콤비(우승 경험) 🤝</span></td>
+                                <td><strong>[호흡 검증]</strong> 이 기수가 이 말을 타고 과거 1착 또는 2착 입상을 합작해 본 단짝 콤비 (+6점)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag gold-tag">과거 스피드 최상 🏎️</span></td>
+                                <td><strong>[경기 전 아침]</strong> 출마표의 과거 통산 최고기록이 기준보다 1초 이상 빠른 말</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag gold-tag">스피드 지수 최상 🏎️</span></td>
+                                <td><strong>[경기 후 복기]</strong> 오늘 실제 결승선을 기준보다 1초 이상 빠르게 통과한 우승마</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag gold-tag">초특급 꿀배당 복병 💰</span></td>
+                                <td>AI 점수는 상위권인데 대중 배당률이 7~25배로 높은 황금마</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">대중 강력 지지 🔥</span></td>
+                                <td>단승식 배당 3.2배 이하로 현장 베팅금이 집중된 인기마</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">특급 기수 🏇</span></td>
+                                <td>최근 1년 복승률 25% 이상 최상위 기수 (문세영, 서승운 등)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">우수 마방 🏆</span></td>
+                                <td>최근 1년 입상률 20% 이상의 명문 조교사(팀) 관리마</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">단거리 황금게이트 ⚡</span></td>
+                                <td>1300m 이하 단거리에서 가장 유리한 1~3번 안쪽 코스</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">경량 부중 ⚡</span></td>
+                                <td>등짐이 52.5kg 이하로 가벼워 막판 역전에 유리한 말</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">단독 선행 찬스 🚀</span></td>
+                                <td>출전마 중 혼자 선두로 독주할 확률이 50% 이상인 말</td>
+                            </tr>
+                            <tr>
+                                <td><span class="ai-tag">승급 첫 도전 🧱</span></td>
+                                <td>직전 경주 1등 후 윗 등급으로 갓 올라온 주의 마필 (-5점)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-title">🦄 V5.0 궁극의 '괴물말' 예시</div>
+                    <div class="guide-text">조교, 장구, 콤비, 스피드까지 풀옵션으로 장착된 이론상 최고 스펙 카드입니다:</div>
+                    <div class="horse-card rank-1" style="margin-top:10px;">
+                        <div class="gate-no">1</div>
+                        <div class="horse-info">
+                            <div class="horse-name">슈퍼트리플크라운 <span class="badge-1st">예상 1위</span></div>
+                            <div class="jockey-name">문세영 기수 | 라이스 조교 (*51.0kg)</div>
+                            <div class="tag-list" style="margin-top:4px;">
+                                <span class="ai-tag">특급 기수 🏇</span>
+                                <span class="ai-tag">우수 마방 🏆</span>
+                                <span class="ai-tag purple-tag">기수 직접 전담조교 🚴</span>
+                                <span class="ai-tag purple-tag">새벽 습보 강훈련 🏋️</span>
+                                <span class="ai-tag purple-tag">찰떡 콤비(우승 경험) 🤝</span>
+                                <span class="ai-tag purple-tag">눈가면 첫 착용 🤿</span>
+                                <span class="ai-tag gold-tag">과거 스피드 최상(73.2초) 🏎️</span>
+                                <span class="ai-tag">단거리 황금게이트 ⚡</span>
+                            </div>
+                        </div>
+                        <div class="score-info">
+                            <div class="win-rate">105.2점</div>
+                            <div style="font-size:0.7rem; color:#888;">단승 1.8배</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [탭 3] 베팅 가이드 -->
+            <div id="tab-betting" class="tab-content">
+                <!-- 💥 [신규 탑재] 대박을 부르는 4대 황금 뱃지 조합 -->
+                <div class="guide-card">
+                    <div class="guide-title">💥 [필승 공략] 대박을 부르는 4대 황금 뱃지 조합</div>
+                    <div class="guide-text">뱃지가 혼자 있을 때보다, <strong>서로 시너지를 내는 뱃지들이 세트로 뭉쳤을 때</strong> 적중률과 배당이 최고조로 올라갑니다!</div>
+
+                    <div class="guide-sub">🏆 1. [1착 확률 70%+] 무조건 1등 코스: 단거리 독주 조합</div>
+                    <div class="guide-box">
+                        <strong>추천 승식: 단승식(1착) 또는 복승식 축마</strong><br>
+                        • <strong>조합 뱃지</strong>: <span class="ai-tag">단거리 황금게이트 ⚡</span> + <span class="ai-tag">단독 선행 찬스 🚀</span> (+ <span class="ai-tag">특급 기수 🏇</span>)<br>
+                        • <strong>핵심 비결</strong>: 1200m 단거리에서 안쪽 1~3번 게이트를 받고 혼자 선두로 독주하면, 모래도 안 맞고 결승선까지 그대로 1등으로 골인(와이어 투 와이어 우승)할 확률이 70%를 넘습니다.
+                    </div>
+
+                    <div class="guide-sub">💰 2. [20~50배 대박] 마방의 극비 작전: 고배당 복병 조합</div>
+                    <div class="guide-box gold">
+                        <strong>추천 승식: 복연승식(1~3착) 1~2천원 무조건 받치기!</strong><br>
+                        • <strong>조합 뱃지</strong>: <span class="ai-tag purple-tag">눈가면 첫 착용 🤿</span> + <span class="ai-tag purple-tag">기수 직접 전담조교 🚴</span> / <span class="ai-tag purple-tag">새벽 습보 강훈련 🏋️</span> (+ <span class="ai-tag gold-tag">초특급 꿀배당 💰</span>)<br>
+                        • <strong>핵심 비결</strong>: 대중은 과거 성적만 보고 안 사서 배당이 15~30배인데, 마방에서 눈가면을 씌우고 주전 기수가 새벽마다 전력질주 훈련을 시켜 상금을 타겠다고 작정하고 나온 전형적인 고배당 이변마입니다.
+                    </div>
+
+                    <div class="guide-sub">🛡️ 3. [원금 보존 방패] 절대 안정 축마 조합</div>
+                    <div class="guide-box">
+                        <strong>추천 승식: 복연승식(1~3착) 또는 삼복승식 축마</strong><br>
+                        • <strong>조합 뱃지</strong>: <span class="ai-tag">우수 마방 🏆</span> + <span class="ai-tag">특급 기수 🏇</span> + <span class="ai-tag purple-tag">찰떡 콤비(우승 경험) 🤝</span><br>
+                        • <strong>핵심 비결</strong>: 명문 마방 + 전국 1등 기수 + 이미 둘이 우승해 본 검증된 단짝 호흡! 말이 실수를 안 하고 1~3착 밖으로 튕겨 나갈 확률이 10% 미만입니다.
+                    </div>
+
+                    <div class="guide-sub">🏹 4. [1400~1800m] 결승선 직선 역전: 추입 조합</div>
+                    <div class="guide-box">
+                        <strong>추천 승식: 복승식, 복연승식</strong><br>
+                        • <strong>조합 뱃지</strong>: <span class="ai-tag">경량 부중 ⚡</span> + <span class="ai-tag">직선주로 스퍼트 최강 🚀</span> (+ <span class="ai-tag gold-tag">과거 스피드 최상 🏎️</span>)<br>
+                        • <strong>핵심 비결</strong>: 가벼운 등짐(51~52kg)으로 체력을 아껴두었다가, 마지막 200m에서 12초대 스퍼트로 앞선 무거운 말들을 결승선 코앞에서 싹 따돌리고 역전합니다.
+                    </div>
+
+                    <div class="guide-sub">⚠️ [조심!] 부러질 인기마(함정) 조합</div>
+                    <div class="guide-box warn">
+                        • <strong>위험 조합</strong>: <span class="ai-tag">대중 강력 지지 🔥</span> + <span class="ai-tag">승급 첫 도전 🧱</span><br>
+                        • <strong>주의 이유</strong>: 배당은 1.5~2.0배로 인기 1위지만, 직전 1착 후 윗 등급으로 갓 올라와 힘센 상위마들에게 밀려 침몰하는 대표적인 함정 인기마입니다!
+                    </div>
+
+                    <div class="guide-box purple" style="margin-top:10px;">
+                        💡 <strong>실전 요약:</strong> 화면에서 <strong>[황금게이트 + 단독선행]</strong>은 1착 축마로 잡고, 7~8등 중에 <strong>[눈가면 + 조교/콤비]</strong> 보라색 뱃지가 뭉친 말은 고배당 복병마로 꼭 챙기세요!
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-title">🟢 1단계: 승부할 경주 고르기 (가장 중요!)</div>
+                    <div class="guide-box">
+                        <strong>👍 돈 걸기 딱 좋은 경주 (승부 경주):</strong><br>
+                        • 1등 말의 AI 점수가 <strong>85점 이상</strong>으로 높을 때<br>
+                        • 1등과 2등의 점수 차이가 <strong>4~5점 이상</strong> 크게 벌어져 있을 때<br>
+                        • 1등 말에 <strong>[단독 선행], [특급 기수], [전담 조교]</strong> 등 핵심 뱃지가 달렸을 때
+                    </div>
+                    <div class="guide-box warn">
+                        <strong>⚠️ 돈 걸지 말고 패스할 경주:</strong><br>
+                        • 1등부터 5등까지 점수가 <strong>1~2점 차이로 빽빽할 때</strong> (대혼전 레이스이므로 패스!)
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-title">🟢 2단계: 성향별 베팅 승식 선택</div>
+                    <div class="guide-sub">🎯 [A코스: 원금 보존형] - 복연승식 ★★★★★ (초보 강력추천)</div>
+                    <div class="guide-text">
+                        • <strong>승식</strong>: <strong>「복연승식」</strong> (AI 1위 - 2위 1구멍)<br>
+                        • <strong>적중 조건</strong>: 고른 2마리가 순서 상관없이 <strong>1·2·3착 안에만 둘 다 들어오면 무조건 당첨!</strong>
+                    </div>
+
+                    <div class="guide-sub">💰 [B코스: 표준 수익형] - 복승식 ★★★★☆</div>
+                    <div class="guide-text">
+                        • <strong>승식</strong>: <strong>「복승식」</strong> (AI 1위 - 2위 1구멍)
+                    </div>
+
+                    <div class="guide-sub">🚀 [C코스: 고배당 방어형] - 축마 2구멍 분산 베팅 ★★★★☆</div>
+                    <div class="guide-text">
+                        • <strong>승식</strong>: <strong>「복승식」</strong> 2구멍 분산<br>
+                        • 1구멍: [AI 1위 - AI 2위] (인기 조합, 금액 60%)<br>
+                        • 2구멍: [AI 1위 - 보라색 뱃지/꿀배당 달린 복병마] (고배당 조합, 금액 40%)
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-title">🟢 3단계: 실제 마권(전자카드 4.0 앱) 마킹법</div>
+                    <div class="guide-box gold">
+                        <strong>[실전 마킹 예시: 영천 6경주 기준]</strong><br>
+                        1. <strong>경주장</strong>: [영천] (또는 서울, 부경, 제주)<br>
+                        2. <strong>경주 번호</strong>: [6경주]<br>
+                        3. <strong>승식</strong>: [복연승] (안전형) 또는 [복승]<br>
+                        4. <strong>마번 선택</strong>: [1번], [2번] 체크<br>
+                        5. <strong>베팅 금액</strong>: [1,000원] ~ [2,000원]<br>
+                        6. <strong>[구매하기]</strong> 클릭!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CORRECT_PIN = "1415";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('app_authenticated') === 'true') {
+                unlockApp();
+            } else {
+                document.getElementById('pinInput').focus();
+            }
+        });
+
+        function checkPin() {
+            const input = document.getElementById('pinInput').value.trim();
+            const errEl = document.getElementById('pinErr');
+
+            if (input === CORRECT_PIN) {
+                localStorage.setItem('app_authenticated', 'true');
+                unlockApp();
+            } else {
+                errEl.style.display = 'block';
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinInput').focus();
+            }
+        }
+
+        document.getElementById('pinInput').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') checkPin();
+        });
+
+        function unlockApp() {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadData();
+        }
+
+        function lockApp() {
+            localStorage.removeItem('app_authenticated');
+            location.reload();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const GITHUB_OWNER = "toto999-999";
+        const GITHUB_REPO = "KRA-AI-V2";
+
+        function triggerImmediateUpdate() {
+            const token = localStorage.getItem('gh_token');
+            if (!token) {
+                document.getElementById('tokenModal').style.display = 'flex';
+                return;
+            }
+            executeWorkflow(token);
+        }
+
+        function closeTokenModal() {
+            document.getElementById('tokenModal').style.display = 'none';
+        }
+
+        function saveTokenAndTrigger() {
+            const input = document.getElementById('ghTokenInput').value.trim();
+            if (!input) {
+                alert("토큰을 입력해주세요!");
+                return;
+            }
+            localStorage.setItem('gh_token', input);
+            closeTokenModal();
+            executeWorkflow(input);
+        }
+
+        function executeWorkflow(token) {
+            const toast = document.getElementById('updateToast');
+            toast.style.display = 'block';
+            toast.textContent = "🚀 마사회 최신 결과 수집 시작! (약 25초 후 자동 갱신됩니다)";
+
+            fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/update.yml/dispatches`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ref: 'main' })
+            })
+            .then(res => {
+                if (res.status === 204) {
+                    let count = 25;
+                    const timer = setInterval(() => {
+                        count--;
+                        if (count > 0) {
+                            toast.textContent = `🚀 로봇이 마사회 착순 가져오는 중... (${count}초 남음)`;
+                        } else {
+                            clearInterval(timer);
+                            toast.textContent = "✨ 데이터 갱신 완료! 화면을 새로고침합니다.";
+                            setTimeout(() => { location.reload(); }, 1500);
+                        }
+                    }, 1000);
+                } else {
+                    toast.textContent = "❌ 갱신 요청 실패: 토큰 권한을 확인해주세요.";
+                    localStorage.removeItem('gh_token');
+                    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+                }
+            })
+            .catch(err => {
+                toast.textContent = "❌ 네트워크 에러가 발생했습니다.";
+                setTimeout(() => { toast.style.display = 'none'; }, 4000);
+            });
+        }
+
+        let allRaceData = [];
+
+        function loadData() {
+            fetch('./race_data.json?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        document.getElementById('dateInfo').textContent = "현재 등록된 경주 데이터가 없습니다.";
+                        return;
+                    }
+                    allRaceData = data;
+                    const select = document.getElementById('raceSelect');
+                    select.innerHTML = '';
+                    
+                    data.forEach((r, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        const dStr = r.distance ? ` (${r.distance}m)` : '';
+                        const tStr = r.track ? ` [${r.track}]` : '';
+                        opt.textContent = `[${r.meet_name}] ${r.race_no}R${dStr}${tStr}`;
+                        select.appendChild(opt);
+                    });
+
+                    document.getElementById('dateInfo').textContent = `${data[0].race_date} AI V5.0 프로 엔진 분석`;
+                    renderRace(0);
+                })
+                .catch(err => {
+                    document.getElementById('dateInfo').textContent = "경주 데이터를 불러올 수 없습니다.";
+                });
+        }
+
+        function renderRace(idx) {
+            const race = allRaceData[idx];
+            const list = document.getElementById('horseList');
+            const banner = document.getElementById('pickBanner');
+            const bannerTitle = document.getElementById('bannerTitle');
+            const hitTag = document.getElementById('hitStatusTag');
+            const recBox = document.getElementById('aiRecommendation');
+            const distLabel = document.getElementById('distLabel');
+            list.innerHTML = '';
+
+            distLabel.textContent = `경주 (${race.distance || '1400'}m | ${race.track || '주로 양호'})`;
+
+            const h1 = race.horses[0];
+            const h2 = race.horses[1];
+            recBox.textContent = `[${h1.gate}번] ${h1.name} ✖ [${h2.gate}번] ${h2.name}`;
+
+            const actual1st = race.horses.find(h => parseInt(h.actual_ord, 10) === 1);
+            const actual2nd = race.horses.find(h => parseInt(h.actual_ord, 10) === 2);
+
+            banner.className = 'pick-banner';
+
+            if (actual1st && actual2nd) {
+                const actualTop2 = [actual1st.gate, actual2nd.gate];
+                const aiTop2 = [h1.gate, h2.gate];
+
+                const isExactHit = aiTop2.includes(actual1st.gate) && aiTop2.includes(actual2nd.gate);
+                const isWinHit = (h1.gate === actual1st.gate);
+
+                if (isExactHit) {
+                    banner.classList.add('hit-exact');
+                    bannerTitle.textContent = "🎯 복승식 적중 대성공!";
+                    hitTag.textContent = "대박 적중 🏆";
+                    recBox.textContent = `[${actual1st.gate}번] ${actual1st.name} ✖ [${actual2nd.gate}번] ${actual2nd.name} (적중)`;
+                } else if (isWinHit) {
+                    banner.classList.add('hit-win');
+                    bannerTitle.textContent = "🎯 단승식 1착 적중!";
+                    hitTag.textContent = "1착 적중 🥇";
+                    recBox.textContent = `예상 1위 [${h1.gate}번] ${h1.name} 1착 골인!`;
+                } else {
+                    banner.classList.add('finished-miss');
+                    bannerTitle.textContent = "🏁 경주 종료 (결과 복기)";
+                    hitTag.textContent = "경기 완료";
+                    recBox.textContent = `실제 결과: 1착 [${actual1st.gate}번] - 2착 [${actual2nd.gate}번]`;
+                }
+            } else {
+                bannerTitle.textContent = "🏆 AI 추천 복승식 (1-2위 조합)";
+                hitTag.textContent = "경기 전 예상";
+            }
+
+            race.horses.forEach((h, i) => {
+                const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+                const ordNum = parseInt(h.actual_ord, 10);
+                
+                let badgeHtml = '';
+                if (ordNum === 1) badgeHtml = '<span class="badge-1st">1착 🥇</span>';
+                else if (ordNum === 2) badgeHtml = '<span class="badge-2nd">2착 🥈</span>';
+                else if (ordNum === 3) badgeHtml = '<span class="badge-3rd">3착 🥉</span>';
+
+                const resultStatus = isNaN(ordNum) ? '경기 전' : `실제 ${ordNum}착`;
+
+                let tagsHtml = '';
+                if (h.ai_tags && h.ai_tags.length > 0) {
+                    tagsHtml = '<div class="tag-list">' + h.ai_tags.map(t => {
+                        const isGold = t.includes('꿀배당') || t.includes('스피드');
+                        const isPurple = t.includes('눈가면') || t.includes('조교') || t.includes('훈련') || t.includes('콤비');
+                        const tagClass = isPurple ? 'purple-tag' : (isGold ? 'gold-tag' : '');
+                        return `<span class="ai-tag ${tagClass}">${t}</span>`;
+                    }).join('') + '</div>';
+                }
+
+                const oddsText = (h.odds_display && h.odds_display !== '-') ? `단승 ${h.odds_display}` : '';
+
+                list.innerHTML += `
+                    <div class="horse-card ${rankClass}">
+                        <div class="gate-no">${h.gate}</div>
+                        <div class="horse-info">
+                            <div class="horse-name">
+                                ${h.name} ${badgeHtml}
+                            </div>
+                            <div class="jockey-name">${h.jockey} 기수 | ${h.trainer} 조교 (${h.weight}kg)</div>
+                            ${tagsHtml}
+                        </div>
+                        <div class="score-info">
+                            <div class="win-rate">${h.ai_score}점</div>
+                            <div style="font-size:0.7rem; color:#888;">예상 ${i+1}위 (${resultStatus})</div>
+                            <div class="odds-tag">${oddsText}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function changeRace() {
+            const val = document.getElementById('raceSelect').value;
+            renderRace(val);
+        }
+    </script>
+</body>
+</html>
