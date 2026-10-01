@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V5.0 (프로 마방·조교·콤비 특수 엔진)
+# 프로그램 명칭: KRA전국 승부예상AI_V5.5 (요일 무관 동적 최신경마일 자동 탐색본)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V5.0"
+VERSION = "KRA전국 승부예상AI_V5.5"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -61,7 +61,7 @@ def fetch_live_chulma_distances():
         "Accept": "*/*"
     }
 
-    print("🌐 마사회 공식 출마표 전산망에서 실시간 경주거리 수집 중...")
+    print("🌐 마사회 공식 출마표 전산망에서 최신 경주거리 수집 중...")
     for m_code, m_name in meets:
         try:
             url = f"https://race.kra.co.kr/chulmainfo/ChulmaDetailInfoList.do?Act=02&Sub=1&meet={m_code}"
@@ -95,7 +95,7 @@ def fetch_live_chulma_distances():
             continue
 
     if dist_map:
-        print(f"✅ 마사회 실시간 출마표 연동 성공! 총 {len(dist_map)}개 경주거리 자동 확보")
+        print(f"✅ 마사회 출마표 연동 성공! 총 {len(dist_map)}개 경주거리 자동 확보")
     return dist_map
 
 def parse_time_seconds(time_str):
@@ -163,11 +163,7 @@ def calculate_speed_rating_dual(current_time_str, past_time_str, rating_str, dis
 
     return bonus, tags
 
-# =========================================================================
-# 🎯 [V5.0 신규] 마구(장구), 새벽조교, 단짝 콤비 정밀 분석 함수군
-# =========================================================================
 def analyze_gear(gear_str):
-    """[V5.0 무기 1] 마구(장구) 변경 분석: 눈가면 첫 착용 등"""
     bonus = 0.0
     tags = []
     g_str = str(gear_str).strip()
@@ -183,22 +179,18 @@ def analyze_gear(gear_str):
     return bonus, tags
 
 def analyze_training(training_str, jockey_name):
-    """[V5.0 무기 2] 새벽 조교(훈련) 강도 & 주전 기수 전담 조교 분석"""
     bonus = 0.0
     tags = []
     t_str = str(training_str).strip()
-    # 1. 전력질주 습보 훈련 감지
     if any(k in t_str for k in ["습보", "강훈련", "강구보", "습보2회", "습보3회"]):
         bonus += 7.0
         tags.append("새벽 습보 강훈련 🏋️")
-    # 2. 기수 직접 조교 감지 (마방 승부 신호)
     if jockey_name and (jockey_name in t_str or "기수조교" in t_str or "기수직접" in t_str):
         bonus += 5.0
         tags.append("기수 직접 전담조교 🚴")
     return bonus, tags
 
 def analyze_combo(combo_str):
-    """[V5.0 무기 3] 기수-경주마 단짝 콤비 전적 분석"""
     bonus = 0.0
     tags = []
     c_str = str(combo_str).strip()
@@ -265,7 +257,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
         "rc_date": date_str
     }
     full_url = f"{URL}?{urllib.parse.urlencode(params)}"
-    print(f"[{meet_name}] 마사회 데이터 수신 요청: {date_str}")
+    print(f"[{meet_name}] 데이터 확인 요청: {date_str}")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -312,7 +304,6 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
             win_odds = gv(["winOdds", "win_odds", "win_rate", "odds", "singleOdds"]) or "0"
             pre_ord = gv(["preOrd", "pre_ord", "recentOrd", "preRcOrd", "rcResult1"]) or ""
 
-            # [V5.0 신규 데이터 태그]
             gear_info = gv(["gear", "janggu", "hrequip", "equip", "blinker", "equipName", "chulmaGear"]) or ""
             training_info = gv(["training", "jogyo", "trackwork", "trainType", "trainRider", "chulmaTraining"]) or ""
             combo_info = gv(["combo", "dongban", "jkHrRecord", "jockeyCombo", "chulmaCombo"]) or ""
@@ -362,9 +353,6 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 "actual_ord": ord_no
             })
 
-        # ==============================================================
-        # 🎯 V5.0 풀옵션 AI 채점 (거리 + 듀얼스피드 + 장구 + 조교 + 콤비)
-        # ==============================================================
         for r in races.values():
             meet = r["meet_name"]
             r_no = str(int(r["race_no"])) if str(r["race_no"]).isdigit() else str(r["race_no"])
@@ -401,7 +389,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 if tr_rate >= 20.0:
                     tags.append("우수 마방 🏆")
 
-                # 2. 거리별 게이트 가중치
+                # 2. 거리별 게이트
                 if dist <= 1300:
                     score += 15.0 if g <= 3 else 7.0 if g <= 7 else -4.0
                     if g <= 3:
@@ -411,7 +399,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 else:
                     score += 10.0 if g <= 4 else 6.0 if g <= 8 else 1.0
 
-                # 3. 부담중량 가중치
+                # 3. 부담중량
                 try:
                     clean_w = float(re.sub(r'[^0-9.]', '', str(h["weight"])))
                     w_factor = 3.5 if dist >= 1700 else 2.5
@@ -428,27 +416,27 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                 score += s_bonus
                 tags.extend(s_tags)
 
-                # 5. [V5.0 신규 1] 마구(장구) 변경 분석
+                # 5. 마구(장구) 변경
                 gear_bonus, gear_tags = analyze_gear(h["gear_info"])
                 score += gear_bonus
                 tags.extend(gear_tags)
 
-                # 6. [V5.0 신규 2] 새벽 조교 강도 & 기수 전담 조교
+                # 6. 새벽 조교 & 기수 전담
                 train_bonus, train_tags = analyze_training(h["training_info"], h["jockey"])
                 score += train_bonus
                 tags.extend(train_tags)
 
-                # 7. [V5.0 신규 3] 기수-말 찰떡 콤비 분석
+                # 7. 기수-말 찰떡 콤비
                 combo_bonus, combo_tags = analyze_combo(h["combo_info"])
                 score += combo_bonus
                 tags.extend(combo_tags)
 
-                # 8. 승급전 감지
+                # 8. 승급전
                 if str(h["pre_ord"]).strip() in ["1", "01"]:
                     score -= 5.0
                     tags.append("승급 첫 도전(검증 필요) 🧱")
 
-                # 9. G1F 직선주로 스퍼트 (경기 후)
+                # 9. G1F 스퍼트 (경기 후)
                 g_bonus, g_tags = analyze_g1f(h["g1f_time"], is_post_race=has_finished)
                 score += g_bonus
                 tags.extend(g_tags)
@@ -458,7 +446,7 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
                     score += 10.0
                     tags.append("단독 선행 찬스 🚀")
 
-                # 11. 배당률 앙상블 & 꿀배당 감지
+                # 11. 배당률 앙상블
                 o_bonus, o_tags, parsed_odds = analyze_odds_and_value(h["win_odds"], score)
                 score += o_bonus
                 tags.extend(o_tags)
@@ -475,29 +463,49 @@ def fetch_meet_data(meet_code, meet_name, date_str, live_distances):
         print(f"[{meet_name}] 수신 에러: {e}")
         return []
 
-def get_target_race_date():
+# =========================================================================
+# 🎯 [V5.5 핵심] 요일 무관 스마트 동적 날짜 탐색기
+# =========================================================================
+def find_most_relevant_races(live_distances):
     """
-    ⚡ [스마트 날짜 계산기]
-    - 금, 토, 일: 오늘 당일 경주 가져오기
-    - 목요일: 내일(금요일) 확정된 최신 출마표 미리 가져오기!
-    - 월, 화, 수: 지난 일요일 복기 데이터 가져오기
+    요일 번호(금/토/일)에 절대 구애받지 않고 마사회 전산망을 탐색:
+    1. 오늘(D-Day) 경주 데이터 확인
+    2. 내일(D+1) ~ 대체공휴일(D+4)까지 예정된 미래 경주 출마표 확인 (10/5 월요일 포함!)
+    3. 미래 경주가 아직 미등록 상태라면 최근 7일간의 완료된 최신 경마일 자동 복구!
     """
     now = datetime.now(KST)
-    weekday = now.weekday()
-    
-    # 1. 금(4), 토(5), 일(6): 오늘 당일 경주
-    if weekday in [4, 5, 6]:
-        return now.strftime("%Y%m%d")
-    
-    # 2. 목요일(3): 내일(금요일) 출마표 미리보기!
-    if weekday == 3:
-        tomorrow = now + timedelta(days=1)
-        return tomorrow.strftime("%Y%m%d")
-    
-    # 3. 월(0), 화(1), 수(2): 지난 일요일 복기
-    days_back = weekday + 1
-    last_sunday = now - timedelta(days=days_back)
-    return last_sunday.strftime("%Y%m%d")
+
+    # 1단계: 오늘(당일) ➔ 향후 4일 이내(내일, 주말, 대체공휴일 월요일 등) 예정 경주 우선 탐색
+    for offset in range(0, 5):
+        target_dt = (now + timedelta(days=offset)).strftime("%Y%m%d")
+        print(f"🔍 [예정/당일 경주 탐색] {target_dt} 마사회 전산 조회 중...")
+
+        found = []
+        for m_code, m_name in MEET_CONFIG:
+            res = fetch_meet_data(m_code, m_name, target_dt, live_distances)
+            found.extend(res)
+            time.sleep(0.3)
+
+        if found:
+            print(f"🎯 [발견 성공] {target_dt} 경주 데이터 {len(found)}개 확보 완료!")
+            return found, target_dt
+
+    # 2단계: 예정 경주가 아직 등록되지 않은 날(평일 전날 등)에는 최근 완료된 최신 경주일 역추적
+    for offset in range(1, 10):
+        past_dt = (now - timedelta(days=offset)).strftime("%Y%m%d")
+        print(f"🔍 [최근 완료 경주 복구 탐색] {past_dt} 조회 중...")
+
+        found = []
+        for m_code, m_name in MEET_CONFIG:
+            res = fetch_meet_data(m_code, m_name, past_dt, live_distances)
+            found.extend(res)
+            time.sleep(0.3)
+
+        if found:
+            print(f"🎯 [최신 복기일 확인] {past_dt} 경주 데이터 {len(found)}개 복원 완료!")
+            return found, past_dt
+
+    return [], ""
 
 def main():
     if not API_KEY:
@@ -505,13 +513,7 @@ def main():
         return
 
     live_distances = fetch_live_chulma_distances()
-    target_date = get_target_race_date()
-    print(f"=== [{VERSION}] {target_date} 프로 특수엔진 가동 ===")
-
-    all_races = []
-    for m_code, m_name in MEET_CONFIG:
-        res = fetch_meet_data(m_code, m_name, target_date, live_distances)
-        all_races.extend(res)
+    all_races, target_date = find_most_relevant_races(live_distances)
 
     if all_races:
         meet_order = {"서울": 1, "부산경남": 2, "영천": 3, "제주": 4}
@@ -521,9 +523,9 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 프로 특수엔진 갱신 완료!")
+        print(f"🎉 성공: [{VERSION}] {target_date} 경마일 데이터 갱신 완료!")
     else:
-        print("데이터를 가져오지 못했습니다.")
+        print("경주 데이터를 가져오지 못했습니다.")
 
 if __name__ == "__main__":
     main()
