@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V6.1 (경기전 판별 버그 완벽 수정본)
+# 프로그램 명칭: KRA전국 승부예상AI_V6.2 (안정 통신 & 18종 뱃지 강제 확정본)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V6.1"
+VERSION = "KRA전국 승부예상AI_V6.2"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -82,14 +82,17 @@ def fetch_meet_data(meet_code, meet_name, date_str):
     }
 
     try:
+        # 타임아웃을 15초로 넉넉히 설정하여 응답 보장!
         req = urllib.request.Request(full_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=6) as response:
+        with urllib.request.urlopen(req, timeout=15) as response:
             xml_data = response.read()
 
         root = ET.fromstring(xml_data)
         items = root.findall(".//item")
         if not items:
             return []
+
+        print(f"[{meet_name}] 마사회 데이터 수신 성공: {len(items)}개 출전마")
 
         races = {}
         for it in items:
@@ -132,7 +135,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p"]) or "99"
             is_front = True if s1f_rank in ["1", "2", "01", "02"] else False
 
-            # 🎯 [착순 파싱 엄격화: ord1cnt 등 통계 태그에 낚이지 않도록 수정!]
             ord_no = "-"
             for child in it:
                 tag = child.tag.lower()
@@ -155,7 +157,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                     "horses": []
                 }
 
-            # 중복 마필 방지
             already_exists = any(h["gate"] == gate or h["name"] == name for h in races[key]["horses"])
             if already_exists:
                 continue
@@ -186,7 +187,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             meet = r["meet_name"]
             r_no = str(int(r["race_no"])) if str(r["race_no"]).isdigit() else str(r["race_no"])
 
-            # 경주장별 거리
             if meet == "제주":
                 actual_dist = "900" if r_no in ["1", "2", "3"] else ("1000" if r_no in ["4", "5"] else "1110")
             elif meet == "부산경남":
@@ -197,11 +197,10 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             r["distance"] = actual_dist
             dist = int(actual_dist)
 
-            # 🎯 [핵심] 경기 종료 여부는 "우승마의 완주시간(rc_time)"이 찍혔는가로 100% 판별!
             has_finished = any(parse_time_seconds(h.get("rc_time", "")) is not None for h in r["horses"])
             front_runner_count = sum(1 for h in r["horses"] if h["is_front"])
 
-            # 경기 전 출전마별 스피드 잠재력 계산
+            # 스피드 잠재력 계산
             for h in r["horses"]:
                 jk_r = JOCKEY_RATES.get(h["jockey"], 12.0)
                 tr_r = TRAINER_RATES.get(h["trainer"], 14.0)
@@ -216,12 +215,10 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 front_power = 10.0 if h["is_front"] else 0.0
                 h["speed_power"] = jk_r * 0.8 + tr_r * 0.4 + gate_power + weight_power + front_power
 
-            # 경주 내 스피드 파워 순위
             sorted_by_speed = sorted(r["horses"], key=lambda x: x["speed_power"], reverse=True)
             top_speed_gate = str(sorted_by_speed[0]["gate"]).strip() if sorted_by_speed else ""
             second_speed_gate = str(sorted_by_speed[1]["gate"]).strip() if len(sorted_by_speed) > 1 else ""
 
-            # 각 마필 채점 및 18종 뱃지 배부
             for h in r["horses"]:
                 h["distance"] = str(dist)
                 score = 30.0
@@ -262,9 +259,8 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 except:
                     pass
 
-                # 4. 🎯 [스피드 뱃지 보장 로직]
+                # 4. 스피드 뱃지
                 if has_finished:
-                    # 경기 후: 완주 초 기준
                     sec = parse_time_seconds(h.get("rc_time", ""))
                     if sec:
                         base_time = {
@@ -278,7 +274,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                             score += 5.0
                             tags.append("기록 우수")
                 else:
-                    # 경기 전: 1위 말에게 '과거 스피드 최상', 2위 말에게 '스피드 우수' 무조건 부착!
                     past_sec = parse_time_seconds(h.get("past_time", ""))
                     if past_sec:
                         score += 10.0
@@ -290,7 +285,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                         score += 5.0
                         tags.append("스피드 우수 🏎️")
 
-                # 5. 전적 기반 통산 복승률 (경기 전)
+                # 5. 전적
                 if not has_finished:
                     tot_rc = int(re.sub(r'[^0-9]', '', str(h.get("rc_cnt", "0"))) or 0)
                     ord1_cnt = int(re.sub(r'[^0-9]', '', str(h.get("ord1_cnt", "0"))) or 0)
@@ -343,12 +338,14 @@ def fetch_meet_data(meet_code, meet_name, date_str):
 
         return list(races.values())
 
-    except Exception:
+    except Exception as e:
+        print(f"[{meet_name}] 통신 에러: {e}")
         return []
 
 def find_fast_races():
     now = datetime.now(KST)
 
+    # 1. 오늘 경주 확인
     today_dt = now.strftime("%Y%m%d")
     print(f"🔍 [1단계] 오늘({today_dt}) 경주 확인...")
     races = []
@@ -357,6 +354,7 @@ def find_fast_races():
     if races:
         return races, today_dt
 
+    # 2. 내일 경주 확인
     tomorrow_dt = (now + timedelta(days=1)).strftime("%Y%m%d")
     print(f"🔍 [2단계] 내일({tomorrow_dt}) 예정 경주 확인...")
     races = []
@@ -365,6 +363,7 @@ def find_fast_races():
     if races:
         return races, tomorrow_dt
 
+    # 3. 직전 일요일 복구
     weekday = now.weekday()
     days_back = weekday + 1 if weekday < 6 else 7
     last_sun_dt = (now - timedelta(days=days_back)).strftime("%Y%m%d")
@@ -392,9 +391,9 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} V6.1 갱신 완료!")
+        print(f"🎉 성공: [{VERSION}] {target_date} 파일 덮어쓰기 완료! ({len(all_races)}개 경주)")
     else:
-        print("데이터를 가져오지 못했습니다.")
+        print("❌ 데이터를 가져오지 못했습니다.")
 
 if __name__ == "__main__":
     main()
