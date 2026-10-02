@@ -1494,7 +1494,7 @@
         "trainer": "최기홍",
         "weight": "53",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:21.6",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1509,9 +1509,10 @@
         "actual_ord": "2",
         "speed_power": 37.800000000000004,
         "distance": "1400",
-        "ai_score": 67.2,
+        "ai_score": 77.2,
         "ai_tags": [
-          "특급 기수 🏇"
+          "특급 기수 🏇",
+          "스피드 지수 최상(81.6초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1522,7 +1523,7 @@
         "trainer": "권승주",
         "weight": "54.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:21.0",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1537,9 +1538,10 @@
         "actual_ord": "1",
         "speed_power": 31.790000000000003,
         "distance": "1400",
-        "ai_score": 61.4,
+        "ai_score": 71.4,
         "ai_tags": [
-          "특급 기수 🏇"
+          "특급 기수 🏇",
+          "스피드 지수 최상(81.0초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1550,7 +1552,7 @@
         "trainer": "임성실",
         "weight": "54.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:22.8",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1562,12 +1564,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "6",
         "speed_power": 30.87,
         "distance": "1400",
-        "ai_score": 60.9,
+        "ai_score": 70.9,
         "ai_tags": [
-          "상위 기수"
+          "상위 기수",
+          "스피드 지수 최상(82.8초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1578,7 +1581,7 @@
         "trainer": "임성실",
         "weight": "52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:24.5",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1590,12 +1593,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "10",
         "speed_power": 27.950000000000003,
         "distance": "1400",
-        "ai_score": 60.0,
+        "ai_score": 70.0,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(84.5초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1606,7 +1610,7 @@
         "trainer": "김도현",
         "weight": "52",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:24.5",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1618,12 +1622,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "11",
         "speed_power": 27.380000000000003,
         "distance": "1400",
-        "ai_score": 59.7,
+        "ai_score": 69.7,
         "ai_tags": [
-          "경량 부중(52.0kg) ⚡"
+          "경량 부중(52.0kg) ⚡",
+          "스피드 지수 최상(84.5초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1634,7 +1639,7 @@
         "trainer": "손병직",
         "weight": "52",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:22.7",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1646,12 +1651,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "5",
         "speed_power": 25.700000000000003,
         "distance": "1400",
-        "ai_score": 57.6,
+        "ai_score": 67.6,
         "ai_tags": [
-          "경량 부중(52.0kg) ⚡"
+          "경량 부중(52.0kg) ⚡",
+          "스피드 지수 최상(82.7초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1662,7 +1668,7 @@
         "trainer": "손병직",
         "weight": "52",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:22.0",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1677,9 +1683,10 @@
         "actual_ord": "3",
         "speed_power": 21.3,
         "distance": "1400",
-        "ai_score": 57.2,
+        "ai_score": 67.2,
         "ai_tags": [
-          "경량 부중(52.0kg) ⚡"
+          "경량 부중(52.0kg) ⚡",
+          "스피드 지수 최상(82.0초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1690,7 +1697,7 @@
         "trainer": "최기홍",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:24.3",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1702,12 +1709,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "9",
         "speed_power": 22.950000000000003,
         "distance": "1400",
-        "ai_score": 54.6,
+        "ai_score": 64.6,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(84.3초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1718,7 +1726,7 @@
         "trainer": "양영남",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:23.5",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1730,12 +1738,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "8",
         "speed_power": 18.950000000000003,
         "distance": "1400",
-        "ai_score": 51.6,
+        "ai_score": 61.6,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(83.5초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1746,7 +1755,7 @@
         "trainer": "김혜선",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:22.3",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1758,12 +1767,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "4",
         "speed_power": 18.950000000000003,
         "distance": "1400",
-        "ai_score": 51.6,
+        "ai_score": 61.6,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(82.3초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1774,7 +1784,7 @@
         "trainer": "방동석",
         "weight": "56.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:23.4",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1786,11 +1796,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "7",
         "speed_power": 16.150000000000002,
         "distance": "1400",
-        "ai_score": 48.6,
-        "ai_tags": [],
+        "ai_score": 58.6,
+        "ai_tags": [
+          "스피드 지수 최상(83.4초) 🏎️"
+        ],
         "odds_display": "-"
       }
     ]
@@ -1811,7 +1823,7 @@
         "trainer": "구민성",
         "weight": "55",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:46.2",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1823,13 +1835,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "11",
         "speed_power": 36.800000000000004,
         "distance": "1800",
         "ai_score": 77.2,
         "ai_tags": [
           "특급 기수 🏇",
-          "과거 스피드 최상 🏎️"
+          "스피드 지수 최상(106.2초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1840,7 +1852,7 @@
         "trainer": "김도현",
         "weight": "51",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:41.8",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1852,13 +1864,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "2",
         "speed_power": 28.880000000000003,
         "distance": "1800",
-        "ai_score": 66.7,
+        "ai_score": 71.7,
         "ai_tags": [
           "경량 부중(51.0kg) ⚡",
-          "스피드 우수 🏎️"
+          "스피드 지수 최상(101.8초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1869,7 +1881,7 @@
         "trainer": "구영준",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:42.2",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1881,13 +1893,14 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "7",
         "speed_power": 28.270000000000003,
         "distance": "1800",
-        "ai_score": 61.4,
+        "ai_score": 71.4,
         "ai_tags": [
           "상위 기수",
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(102.2초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1898,7 +1911,7 @@
         "trainer": "안우성",
         "weight": "56.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:41.6",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1910,12 +1923,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "1",
         "speed_power": 25.27,
         "distance": "1800",
-        "ai_score": 61.1,
+        "ai_score": 71.1,
         "ai_tags": [
-          "특급 기수 🏇"
+          "특급 기수 🏇",
+          "스피드 지수 최상(101.6초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1926,7 +1940,7 @@
         "trainer": "민장기",
         "weight": "52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:41.8",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1938,13 +1952,14 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "3",
         "speed_power": 22.190000000000005,
         "distance": "1800",
-        "ai_score": 55.7,
+        "ai_score": 65.7,
         "ai_tags": [
           "우수 마방 🏆",
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(101.8초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1955,7 +1970,7 @@
         "trainer": "방동석",
         "weight": "57.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:43.3",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1967,12 +1982,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "9",
         "speed_power": 15.450000000000003,
         "distance": "1800",
-        "ai_score": 54.6,
+        "ai_score": 64.6,
         "ai_tags": [
-          "체급 최강자(탑웨이트) 🏋️"
+          "체급 최강자(탑웨이트) 🏋️",
+          "스피드 지수 최상(103.3초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -1983,7 +1999,7 @@
         "trainer": "임금만",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:42.1",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -1995,12 +2011,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "6",
         "speed_power": 22.950000000000003,
         "distance": "1800",
-        "ai_score": 54.6,
+        "ai_score": 64.6,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(102.1초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -2011,7 +2028,7 @@
         "trainer": "손병철",
         "weight": "53.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:42.4",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -2023,11 +2040,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "8",
         "speed_power": 24.650000000000002,
         "distance": "1800",
-        "ai_score": 52.8,
-        "ai_tags": [],
+        "ai_score": 62.8,
+        "ai_tags": [
+          "스피드 지수 최상(102.4초) 🏎️"
+        ],
         "odds_display": "-"
       },
       {
@@ -2037,7 +2056,7 @@
         "trainer": "토마스",
         "weight": "*52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:41.9",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -2049,12 +2068,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "4",
         "speed_power": 18.950000000000003,
         "distance": "1800",
-        "ai_score": 51.6,
+        "ai_score": 61.6,
         "ai_tags": [
-          "경량 부중(52.5kg) ⚡"
+          "경량 부중(52.5kg) ⚡",
+          "스피드 지수 최상(101.9초) 🏎️"
         ],
         "odds_display": "-"
       },
@@ -2065,7 +2085,7 @@
         "trainer": "최기홍",
         "weight": "55.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:43.8",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -2077,11 +2097,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "10",
         "speed_power": 18.450000000000003,
         "distance": "1800",
-        "ai_score": 51.2,
-        "ai_tags": [],
+        "ai_score": 61.2,
+        "ai_tags": [
+          "스피드 지수 최상(103.8초) 🏎️"
+        ],
         "odds_display": "-"
       },
       {
@@ -2091,7 +2113,7 @@
         "trainer": "윤영훈",
         "weight": "56.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "1:42.1",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -2103,11 +2125,13 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "5",
         "speed_power": 18.950000000000003,
         "distance": "1800",
-        "ai_score": 50.4,
-        "ai_tags": [],
+        "ai_score": 60.4,
+        "ai_tags": [
+          "스피드 지수 최상(102.1초) 🏎️"
+        ],
         "odds_display": "-"
       }
     ]
@@ -4427,43 +4451,13 @@
     "version": "KRA전국 승부예상AI_V6.8",
     "horses": [
       {
-        "gate": "10",
-        "name": "광해전차",
-        "jockey": "임재광",
-        "trainer": "심도연",
-        "weight": "53",
-        "track": "양호",
-        "rc_time": "-",
-        "past_time": "",
-        "g1f_time": "",
-        "win_odds": "0",
-        "pre_ord": "",
-        "gear_info": "",
-        "training_info": "",
-        "combo_info": "",
-        "rc_cnt": "0",
-        "ord1_cnt": "0",
-        "ord2_cnt": "0",
-        "is_front": false,
-        "actual_ord": "-",
-        "speed_power": 29.840000000000003,
-        "distance": "1110",
-        "ai_score": 69.2,
-        "ai_tags": [
-          "상위 기수",
-          "우수 마방 🏆",
-          "과거 스피드 최상 🏎️"
-        ],
-        "odds_display": "-"
-      },
-      {
         "gate": "6",
         "name": "보라매",
         "jockey": "곽용남",
         "trainer": "윤덕상",
         "weight": "51.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:03.7",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4475,13 +4469,12 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "6",
         "speed_power": 29.810000000000002,
         "distance": "1110",
-        "ai_score": 68.3,
+        "ai_score": 63.3,
         "ai_tags": [
-          "경량 부중(51.5kg) ⚡",
-          "스피드 우수 🏎️"
+          "경량 부중(51.5kg) ⚡"
         ],
         "odds_display": "-"
       },
@@ -4492,7 +4485,7 @@
         "trainer": "이태용",
         "weight": "51",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:03.7",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4504,7 +4497,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "8",
         "speed_power": 29.6,
         "distance": "1110",
         "ai_score": 63.0,
@@ -4520,7 +4513,7 @@
         "trainer": "윤호상",
         "weight": "58",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:03.7",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4532,7 +4525,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "7",
         "speed_power": 21.66,
         "distance": "1110",
         "ai_score": 62.6,
@@ -4549,7 +4542,7 @@
         "trainer": "이준호",
         "weight": "56.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:03.9",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4561,12 +4554,41 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "9",
         "speed_power": 29.550000000000004,
         "distance": "1110",
         "ai_score": 62.2,
         "ai_tags": [
           "특급 기수 🏇"
+        ],
+        "odds_display": "-"
+      },
+      {
+        "gate": "10",
+        "name": "광해전차",
+        "jockey": "임재광",
+        "trainer": "심도연",
+        "weight": "53",
+        "track": "양호",
+        "rc_time": "2:03.5",
+        "past_time": "",
+        "g1f_time": "",
+        "win_odds": "0",
+        "pre_ord": "",
+        "gear_info": "",
+        "training_info": "",
+        "combo_info": "",
+        "rc_cnt": "0",
+        "ord1_cnt": "0",
+        "ord2_cnt": "0",
+        "is_front": false,
+        "actual_ord": "5",
+        "speed_power": 29.840000000000003,
+        "distance": "1110",
+        "ai_score": 59.2,
+        "ai_tags": [
+          "상위 기수",
+          "우수 마방 🏆"
         ],
         "odds_display": "-"
       },
@@ -4577,7 +4599,7 @@
         "trainer": "한상배",
         "weight": "51",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:02.9",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4589,7 +4611,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "3",
         "speed_power": 24.400000000000002,
         "distance": "1110",
         "ai_score": 57.8,
@@ -4605,7 +4627,7 @@
         "trainer": "고영덕",
         "weight": "52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:02.9",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4617,7 +4639,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "2",
         "speed_power": 24.950000000000003,
         "distance": "1110",
         "ai_score": 57.6,
@@ -4634,7 +4656,7 @@
         "trainer": "이태용",
         "weight": "52.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:02.6",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4646,7 +4668,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "1",
         "speed_power": 24.950000000000003,
         "distance": "1110",
         "ai_score": 57.6,
@@ -4663,7 +4685,7 @@
         "trainer": "변용호",
         "weight": "53.5",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:06.2",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4675,7 +4697,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "10",
         "speed_power": 24.250000000000004,
         "distance": "1110",
         "ai_score": 53.4,
@@ -4691,7 +4713,7 @@
         "trainer": "강영진",
         "weight": "56",
         "track": "양호",
-        "rc_time": "-",
+        "rc_time": "2:03.4",
         "past_time": "",
         "g1f_time": "",
         "win_odds": "0",
@@ -4703,7 +4725,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "4",
         "speed_power": 17.700000000000003,
         "distance": "1110",
         "ai_score": 49.8,
