@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V6.3 (ordNo 착순 100% 복원 최종본)
+# 프로그램 명칭: KRA전국 승부예상AI_V6.5 (실전 밸런스 패치 & 외곽 실력마 복원)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V6.3"
+VERSION = "KRA전국 승부예상AI_V6.5"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -82,6 +82,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
     }
 
     try:
+        # 타임아웃 12초 설정
         req = urllib.request.Request(full_url, headers=headers)
         with urllib.request.urlopen(req, timeout=12) as response:
             xml_data = response.read()
@@ -134,7 +135,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p"]) or "99"
             is_front = True if s1f_rank in ["1", "2", "01", "02"] else False
 
-            # 🎯 [착순 파싱 완벽 복원: ordNo, ord, rank, chaksun 정확 추출 & 통계태그 배제]
+            # 착순 정확 추출
             ord_no = "-"
             direct_ord = gv(["ordNo", "ord_no", "ord", "rc_ord", "rcOrd", "rank", "rankNo", "chaksun"])
             if direct_ord and direct_ord.isdigit() and int(direct_ord) > 0:
@@ -194,7 +195,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             meet = r["meet_name"]
             r_no = str(int(r["race_no"])) if str(r["race_no"]).isdigit() else str(r["race_no"])
 
-            # 거리 확정
             if meet == "제주":
                 actual_dist = "900" if r_no in ["1", "2", "3"] else ("1000" if r_no in ["4", "5"] else "1110")
             elif meet == "부산경남":
@@ -205,13 +205,10 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             r["distance"] = actual_dist
             dist = int(actual_dist)
 
-            # 🎯 [핵심] 실제 착순이 나왔거나 완주시간이 있으면 경기 종료(Post-race)로 100% 확정!
             has_finished = any(h["actual_ord"].isdigit() and int(h["actual_ord"]) > 0 for h in r["horses"]) or \
                            any(parse_time_seconds(h.get("rc_time", "")) is not None for h in r["horses"])
-            
-            front_runner_count = sum(1 for h in r["horses"] if h["is_front"])
 
-            # 스피드 잠재력 계산
+            # 🎯 [실전 밸런스 패치 1] 게이트 거품 축소 및 경량마 가속력 튜닝
             for h in r["horses"]:
                 jk_r = JOCKEY_RATES.get(h["jockey"], 12.0)
                 tr_r = TRAINER_RATES.get(h["trainer"], 14.0)
@@ -221,8 +218,10 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 except:
                     w_val = 55.0
                 
-                gate_power = 15.0 if g_val <= 3 else (7.0 if g_val <= 7 else 0.0)
-                weight_power = (55.0 - w_val) * 2.0
+                # 게이트 가산점 축소 (+15 -> +6점) & 외곽 감점 삭제!
+                gate_power = 6.0 if g_val <= 3 else (4.0 if g_val <= 7 else 0.0)
+                # 경량마 파워 강화
+                weight_power = (55.0 - w_val) * 2.8
                 front_power = 10.0 if h["is_front"] else 0.0
                 h["speed_power"] = jk_r * 0.8 + tr_r * 0.4 + gate_power + weight_power + front_power
 
@@ -237,7 +236,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 g = int(h["gate"]) if str(h["gate"]).isdigit() else 5
                 this_gate = str(h["gate"]).strip()
 
-                # 1. 기수 & 조교사 복승률
+                # 1. 기수 & 조교사
                 jk_rate = JOCKEY_RATES.get(h["jockey"], 12.0)
                 score += (jk_rate * 0.8)
                 if jk_rate >= 24.0:
@@ -250,27 +249,28 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 if tr_rate >= 20.0:
                     tags.append("우수 마방 🏆")
 
-                # 2. 거리별 게이트 가중치
+                # 2. 🎯 [실전 밸런스 패치 2] 거리별 게이트 가중치 현실화!
+                # 안쪽 게이트는 +6점만 부여하고, 외곽 게이트(-4점 감점)를 0점으로 완전 삭제!
                 if dist <= 1300:
-                    score += 15.0 if g <= 3 else 7.0 if g <= 7 else -4.0
+                    score += 6.0 if g <= 3 else (4.0 if g <= 7 else 0.0)
                     if g <= 3:
                         tags.append("단거리 황금게이트 ⚡")
                 elif dist >= 1700:
-                    score += 8.0 if g <= 4 else 5.0 if g <= 8 else 2.0
+                    score += 5.0 if g <= 4 else (3.0 if g <= 8 else 0.0)
                 else:
-                    score += 10.0 if g <= 4 else 6.0 if g <= 8 else 1.0
+                    score += 5.0 if g <= 4 else (3.0 if g <= 8 else 0.0)
 
-                # 3. 부담중량 가중치
+                # 3. 🎯 [실전 밸런스 패치 3] 경량 부중 보너스 대폭 강화! (51~53kg 복병마 발굴력 증대)
                 try:
                     clean_w = float(re.sub(r'[^0-9.]', '', str(h["weight"])))
-                    w_factor = 3.5 if dist >= 1700 else 2.5
+                    w_factor = 3.5 if dist >= 1700 else 2.8
                     score += (55.0 - clean_w) * w_factor
                     if clean_w <= 52.5:
                         tags.append(f"경량 부중({clean_w}kg) ⚡")
                 except:
                     pass
 
-                # 4. 스피드 뱃지 (경기전/경기후 자동 분기)
+                # 4. 스피드 뱃지
                 if has_finished:
                     sec = parse_time_seconds(h.get("rc_time", ""))
                     if sec:
@@ -402,7 +402,7 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 착순 복원 갱신 완료!")
+        print(f"🎉 성공: [{VERSION}] {target_date} 밸런스 패치 완료! ({len(all_races)}개 경주)")
     else:
         print("❌ 데이터를 가져오지 못했습니다.")
 
