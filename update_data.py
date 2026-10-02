@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V6.2 (안정 통신 & 18종 뱃지 강제 확정본)
+# 프로그램 명칭: KRA전국 승부예상AI_V6.3 (ordNo 착순 100% 복원 최종본)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V6.2"
+VERSION = "KRA전국 승부예상AI_V6.3"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -82,9 +82,8 @@ def fetch_meet_data(meet_code, meet_name, date_str):
     }
 
     try:
-        # 타임아웃을 15초로 넉넉히 설정하여 응답 보장!
         req = urllib.request.Request(full_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as response:
+        with urllib.request.urlopen(req, timeout=12) as response:
             xml_data = response.read()
 
         root = ET.fromstring(xml_data)
@@ -92,7 +91,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
         if not items:
             return []
 
-        print(f"[{meet_name}] 마사회 데이터 수신 성공: {len(items)}개 출전마")
+        print(f"[{meet_name}] 마사회 데이터 수신: {len(items)}개 출전마")
 
         races = {}
         for it in items:
@@ -135,14 +134,21 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             s1f_rank = gv(["g1p", "s1f", "g1pRank", "ord1p"]) or "99"
             is_front = True if s1f_rank in ["1", "2", "01", "02"] else False
 
+            # 🎯 [착순 파싱 완벽 복원: ordNo, ord, rank, chaksun 정확 추출 & 통계태그 배제]
             ord_no = "-"
-            for child in it:
-                tag = child.tag.lower()
-                if tag in ["ord", "rc_ord", "rcord", "rank", "ord_no"]:
-                    txt = child.text.strip() if child.text else ""
-                    if txt.isdigit() and int(txt) > 0:
-                        ord_no = str(int(txt))
-                        break
+            direct_ord = gv(["ordNo", "ord_no", "ord", "rc_ord", "rcOrd", "rank", "rankNo", "chaksun"])
+            if direct_ord and direct_ord.isdigit() and int(direct_ord) > 0:
+                ord_no = str(int(direct_ord))
+            else:
+                for child in it:
+                    tag_low = child.tag.lower()
+                    if any(ex in tag_low for ex in ["cnt", "s1f", "g1p", "g2p", "g3p", "g4p", "pass", "time"]):
+                        continue
+                    if any(k in tag_low for k in ["ord", "rank", "plc", "place", "chak"]):
+                        txt = child.text.strip() if child.text else ""
+                        if txt.isdigit() and int(txt) > 0:
+                            ord_no = str(int(txt))
+                            break
 
             key = f"{meet_name}_{rc_no}"
             if key not in races:
@@ -157,6 +163,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                     "horses": []
                 }
 
+            # 중복 마필 방지
             already_exists = any(h["gate"] == gate or h["name"] == name for h in races[key]["horses"])
             if already_exists:
                 continue
@@ -187,6 +194,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             meet = r["meet_name"]
             r_no = str(int(r["race_no"])) if str(r["race_no"]).isdigit() else str(r["race_no"])
 
+            # 거리 확정
             if meet == "제주":
                 actual_dist = "900" if r_no in ["1", "2", "3"] else ("1000" if r_no in ["4", "5"] else "1110")
             elif meet == "부산경남":
@@ -197,7 +205,10 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             r["distance"] = actual_dist
             dist = int(actual_dist)
 
-            has_finished = any(parse_time_seconds(h.get("rc_time", "")) is not None for h in r["horses"])
+            # 🎯 [핵심] 실제 착순이 나왔거나 완주시간이 있으면 경기 종료(Post-race)로 100% 확정!
+            has_finished = any(h["actual_ord"].isdigit() and int(h["actual_ord"]) > 0 for h in r["horses"]) or \
+                           any(parse_time_seconds(h.get("rc_time", "")) is not None for h in r["horses"])
+            
             front_runner_count = sum(1 for h in r["horses"] if h["is_front"])
 
             # 스피드 잠재력 계산
@@ -226,7 +237,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 g = int(h["gate"]) if str(h["gate"]).isdigit() else 5
                 this_gate = str(h["gate"]).strip()
 
-                # 1. 기수 & 조교사
+                # 1. 기수 & 조교사 복승률
                 jk_rate = JOCKEY_RATES.get(h["jockey"], 12.0)
                 score += (jk_rate * 0.8)
                 if jk_rate >= 24.0:
@@ -239,7 +250,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 if tr_rate >= 20.0:
                     tags.append("우수 마방 🏆")
 
-                # 2. 거리별 게이트
+                # 2. 거리별 게이트 가중치
                 if dist <= 1300:
                     score += 15.0 if g <= 3 else 7.0 if g <= 7 else -4.0
                     if g <= 3:
@@ -249,7 +260,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 else:
                     score += 10.0 if g <= 4 else 6.0 if g <= 8 else 1.0
 
-                # 3. 부담중량
+                # 3. 부담중량 가중치
                 try:
                     clean_w = float(re.sub(r'[^0-9.]', '', str(h["weight"])))
                     w_factor = 3.5 if dist >= 1700 else 2.5
@@ -259,7 +270,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 except:
                     pass
 
-                # 4. 스피드 뱃지
+                # 4. 스피드 뱃지 (경기전/경기후 자동 분기)
                 if has_finished:
                     sec = parse_time_seconds(h.get("rc_time", ""))
                     if sec:
@@ -391,7 +402,7 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 파일 덮어쓰기 완료! ({len(all_races)}개 경주)")
+        print(f"🎉 성공: [{VERSION}] {target_date} 착순 복원 갱신 완료!")
     else:
         print("❌ 데이터를 가져오지 못했습니다.")
 
