@@ -1506,13 +1506,12 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "2",
         "speed_power": 37.800000000000004,
         "distance": "1400",
-        "ai_score": 77.2,
+        "ai_score": 67.2,
         "ai_tags": [
-          "특급 기수 🏇",
-          "과거 스피드 최상 🏎️"
+          "특급 기수 🏇"
         ],
         "odds_display": "-"
       },
@@ -1535,13 +1534,12 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "1",
         "speed_power": 31.790000000000003,
         "distance": "1400",
-        "ai_score": 66.4,
+        "ai_score": 61.4,
         "ai_tags": [
-          "특급 기수 🏇",
-          "스피드 우수 🏎️"
+          "특급 기수 🏇"
         ],
         "odds_display": "-"
       },
@@ -1676,7 +1674,7 @@
         "ord1_cnt": "0",
         "ord2_cnt": "0",
         "is_front": false,
-        "actual_ord": "-",
+        "actual_ord": "3",
         "speed_power": 21.3,
         "distance": "1400",
         "ai_score": 57.2,
