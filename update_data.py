@@ -8,9 +8,9 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # =========================================================================
-# 프로그램 명칭: KRA전국 승부예상AI_V6.5 (실전 밸런스 패치 & 외곽 실력마 복원)
+# 프로그램 명칭: KRA전국 승부예상AI_V6.8 (탑웨이트 챔피언 보정 & TOP3 적중 극대화)
 # =========================================================================
-VERSION = "KRA전국 승부예상AI_V6.5"
+VERSION = "KRA전국 승부예상AI_V6.8"
 API_KEY = os.environ.get("KRA_API_KEY", "")
 URL = "http://apis.data.go.kr/B551015/racedetailresult/getracedetailresult"
 
@@ -82,7 +82,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
     }
 
     try:
-        # 타임아웃 12초 설정
         req = urllib.request.Request(full_url, headers=headers)
         with urllib.request.urlopen(req, timeout=12) as response:
             xml_data = response.read()
@@ -164,7 +163,6 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                     "horses": []
                 }
 
-            # 중복 마필 방지
             already_exists = any(h["gate"] == gate or h["name"] == name for h in races[key]["horses"])
             if already_exists:
                 continue
@@ -208,7 +206,16 @@ def fetch_meet_data(meet_code, meet_name, date_str):
             has_finished = any(h["actual_ord"].isdigit() and int(h["actual_ord"]) > 0 for h in r["horses"]) or \
                            any(parse_time_seconds(h.get("rc_time", "")) is not None for h in r["horses"])
 
-            # 🎯 [실전 밸런스 패치 1] 게이트 거품 축소 및 경량마 가속력 튜닝
+            # 🎯 [핵심 1] 해당 경주 출전마들의 최고 부담중량(Top Weight) 산출!
+            all_weights = []
+            for h in r["horses"]:
+                try:
+                    all_weights.append(float(re.sub(r'[^0-9.]', '', str(h["weight"]))))
+                except:
+                    all_weights.append(55.0)
+            max_race_weight = max(all_weights) if all_weights else 55.0
+
+            # 스피드 잠재력 계산
             for h in r["horses"]:
                 jk_r = JOCKEY_RATES.get(h["jockey"], 12.0)
                 tr_r = TRAINER_RATES.get(h["trainer"], 14.0)
@@ -218,10 +225,8 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 except:
                     w_val = 55.0
                 
-                # 게이트 가산점 축소 (+15 -> +6점) & 외곽 감점 삭제!
                 gate_power = 6.0 if g_val <= 3 else (4.0 if g_val <= 7 else 0.0)
-                # 경량마 파워 강화
-                weight_power = (55.0 - w_val) * 2.8
+                weight_power = (55.0 - w_val) * 1.5
                 front_power = 10.0 if h["is_front"] else 0.0
                 h["speed_power"] = jk_r * 0.8 + tr_r * 0.4 + gate_power + weight_power + front_power
 
@@ -236,7 +241,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 g = int(h["gate"]) if str(h["gate"]).isdigit() else 5
                 this_gate = str(h["gate"]).strip()
 
-                # 1. 기수 & 조교사
+                # 1. 기수 & 조교사 복승률
                 jk_rate = JOCKEY_RATES.get(h["jockey"], 12.0)
                 score += (jk_rate * 0.8)
                 if jk_rate >= 24.0:
@@ -249,8 +254,7 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 if tr_rate >= 20.0:
                     tags.append("우수 마방 🏆")
 
-                # 2. 🎯 [실전 밸런스 패치 2] 거리별 게이트 가중치 현실화!
-                # 안쪽 게이트는 +6점만 부여하고, 외곽 게이트(-4점 감점)를 0점으로 완전 삭제!
+                # 2. 거리별 게이트 가중치 (외곽 감점 완전 배제)
                 if dist <= 1300:
                     score += 6.0 if g <= 3 else (4.0 if g <= 7 else 0.0)
                     if g <= 3:
@@ -260,13 +264,22 @@ def fetch_meet_data(meet_code, meet_name, date_str):
                 else:
                     score += 5.0 if g <= 4 else (3.0 if g <= 8 else 0.0)
 
-                # 3. 🎯 [실전 밸런스 패치 3] 경량 부중 보너스 대폭 강화! (51~53kg 복병마 발굴력 증대)
+                # 3. 🎯 [핵심 2: 제주 6R 교훈 완벽 반영] 부담중량의 역설 밸런스 패치!
                 try:
                     clean_w = float(re.sub(r'[^0-9.]', '', str(h["weight"])))
-                    w_factor = 3.5 if dist >= 1700 else 2.8
-                    score += (55.0 - clean_w) * w_factor
+                    
+                    # (A) 경량마 (51~52.5kg): 가벼운 등짐 혜택
                     if clean_w <= 52.5:
+                        score += (55.0 - clean_w) * 2.0
                         tags.append(f"경량 부중({clean_w}kg) ⚡")
+                    # (B) 헤비급 챔피언 (57.5kg 이상 및 당일 최고 중량마): 체급 최강자 인정!
+                    elif clean_w >= 57.5 and clean_w == max_race_weight:
+                        # 과도한 감점을 없애고, 핸디캐퍼가 인정한 최강마 보너스 부여!
+                        score += 5.0
+                        tags.append("체급 최강자(탑웨이트) 🏋️")
+                    else:
+                        # 일반 중량마 완만한 감점 (최대 -3~4점 이내로 억제)
+                        score -= max(0.0, (clean_w - 55.0) * 0.8)
                 except:
                     pass
 
@@ -402,7 +415,7 @@ def main():
         ))
         with open("race_data.json", "w", encoding="utf-8") as f:
             json.dump(all_races, f, ensure_ascii=False, indent=2)
-        print(f"🎉 성공: [{VERSION}] {target_date} 밸런스 패치 완료! ({len(all_races)}개 경주)")
+        print(f"🎉 성공: [{VERSION}] {target_date} 탑웨이트 챔피언 튜닝 완료! ({len(all_races)}개 경주)")
     else:
         print("❌ 데이터를 가져오지 못했습니다.")
 
